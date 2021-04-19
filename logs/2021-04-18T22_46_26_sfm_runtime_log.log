@@ -1,0 +1,4 @@
+INFO:root:Reading image paths text file...
+INFO:root:4 images found.
+INFO:root:image001 from filepath F:/Documents/SFM_Project/images/image001.jpg opened successfully.
+INFO:root:image002 from filepath F:/Documents/SFM_Project/images/image002.jpg opened successfully.
