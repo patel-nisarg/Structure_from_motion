@@ -31,26 +31,36 @@ def feature_match(view1, view2, matcher_type="bf", NUM_NEAREST_NEIGHBOURS=2, hom
     matches = matcher.knnMatch(view1.descriptors, view2.descriptors, k=NUM_NEAREST_NEIGHBOURS)
 
     good_matches = []
-    X1 = np.array([])  # points in image 1
-    X2 = np.array([])  # corresponding points in image 2
+    X1 = []  # points in image 1
+    X2 = []  # corresponding points in image 2
 
     for m, n in matches:
         if m.distance < 0.8 * n.distance:
             good_matches.append(m)
-            np.append(X1, view1.keypoints[m.queryIdx].pt)
-            np.append(X2, view2.keypoints[m.trainIdx].pt)
+            X1.append(view1.keypoints[m.queryIdx].pt)
+            X2.append(view2.keypoints[m.trainIdx].pt)
+
+    X1 = np.array(X1)
+    X2 = np.array(X2)
 
     if len(good_matches) > 10:
-        H, s = cv.findHomography(X1, X2, cv.RANSAC, 4)
-        s = np.asarray(s, dtype=bool)
-        overlap_amount = sum(s) / len(s)
-        if overlap_amount >= homography_threshold:
-            view1_kps = X1[s]
-            view2_kps = X2[s]
-            return view1_kps, view2_kps, overlap_amount
-        else:
-            logging.info(f"Not enough point overlap found between {view1.name} and {view2.name}.")
-            return None, None, None
+        logging.info(f"{len(good_matches)} good matches found from {len(matches)} matches "
+                     f"between {view1.name} and {view2.name}.")
+        # return matches between X1 and X2
+
+        # H, mask = cv.findHomography(X1, X2, cv.RANSAC, 4)
+        # overlap_amount = sum(mask) / len(mask)
+        # if overlap_amount >= homography_threshold:
+        #     view1_kps = X1[mask.ravel() == 1]
+        #     view2_kps = X2[mask.ravel() == 1]
+        #     return view1_kps, view2_kps, mask, overlap_amount
+        # else:
+        #     logging.info(f"Not enough point overlap found between {view1.name} and {view2.name}. "
+        #                  f"Overlap, Threshold:{overlap_amount}{homography_threshold}")
+        #     return None
+        view1.tracked_pts[view2.id] = (X1, X2)
+        view2.tracked_pts[view1.id] = (X2, X1)
+        return X1, X2
     else:
         logging.info(f"Insufficient feature matches between {view1.name} and {view2.name}.")
 
@@ -108,11 +118,11 @@ def vec2skew(v):
             [-v[2], v[0], 0]]
 
 
-def linear_triangulation(K, C1, R1, C2, R2, x1, x2):
+def linear_triangulation(K, C1, R1, C2, R2, x1, x2, inhomogeneous=True):
     """LinearTriangulation
-  Find 3D positions of the point correspondences using the relative
-  position of one camera from another
-  Inputs:
+    Find 3D positions of the point correspondences using the relative
+    position of one camera from another
+    Inputs:
       C1 - size (3 x 1) translation of the first camera pose
       R1 - size (3 x 3) rotation of the first camera pose
       C2 - size (3 x 1) translation of the second camera
@@ -120,10 +130,10 @@ def linear_triangulation(K, C1, R1, C2, R2, x1, x2):
       x1 - size (N x 2) matrix of points in image 1
       x2 - size (N x 2) matrix of points in image 2, each row corresponding
         to x1
-  Outputs: 
-      X - size (N x 3) matrix who's rows represent the 3D triangulated
+      inhomogeneous: If true, returns X as N x 3 instead of N x 4
+    Outputs:
+      X - size (N x 3) OR (N x 4) matrix who's rows represent the 3D triangulated
         points"""
-
     P1 = K @ np.hstack((R1, -R1 @ C1))
     P2 = K @ np.hstack((R2, -R2 @ C2))
     X = np.zeros((len(x1), 4))
@@ -133,6 +143,8 @@ def linear_triangulation(K, C1, R1, C2, R2, x1, x2):
         A = np.concatenate((pt1 @ np.asarray(P1), pt2 @ np.asarray(P2)), axis=0)
         _, _, V = np.linalg.svd(A)
         X[i] = V[:, -1] / V[-1, -1]
+    if inhomogeneous:
+        X = np.delete(X, -1, 1)
     return X
 
 
@@ -159,51 +171,75 @@ def pose_disambiguation(C_set, R_set, X_set):
                 num_points += 1
         return num_points
 
-    error = []
+    condition_met = []
     for i in range(len(R_set)):
-        error.append(check_chirality(C_set[i], R_set[i], X_set[i]))
+        condition_met.append(check_chirality(C_set[i], R_set[i], X_set[i]))
 
-    return X_set[np.argmin(error)]
+    X = np.delete(X_set[np.argmax(condition_met)], -1, 1)
+    R = R_set[np.argmax(condition_met)]
+    return X, R
 
 
 # Does not seem to work. Throws memory error.
-def triangulate_points(K, C1, R1, C2, R2, x1, x2):
-    P1 = K @ np.hstack((R1, -R1 @ C1))
-    P2 = K @ np.hstack((R2, -R2 @ C2))
+def triangulate_points(K, t1, R1, t2, R2, x1, x2):
+    P1 = K @ np.hstack((R1, t1))
+    P2 = K @ np.hstack((R2, t2))
+    print(f" R1: {R1.shape}, R2:{R2.shape}, t1: {t1.shape}, t2:{t2.shape}, x1: {x1.T.shape}, x2: {x2.T.shape}.")
     x1 = x1.T
     x2 = x2.T
     X = cv.triangulatePoints(P1, P2, x1, x2)
+    X = cv.convertPointsFromHomogeneous(X.T)
+    print(f"3D Points shape: {X.shape}")
     return X
-
-
-def write_pose_to_file(view):
-    """
-    Writes the pose of view object to a file.
-    :param pose:
-    """
-    pass
 
 
 def visualize_pt_cloud(world_coords):
     pass
 
 
-def compute_pose(view, completed_views):
+def compute_pose(view, completed_views, K, dist):
     """
     Compute pose of current view from completed_views using Linear PnP.
     Also updates the tracked points (view.tracked_pts['completed_view']) between current view and completed views.
     :param view: Current view for which to compute pose.
     :param completed_views: List containing all View Ids that have been 3D reconstructed.
+    :param K:
+    :param dist:
     :return:
     """
+    points_2d = []
+    points_3d = np.array([])
 
-    def linear_pnp():
-        pass
+    for view_n in completed_views:
+        match = feature_match(view, view_n)
+        if match is not None:
+            logging.info(f"Sufficient homography found between {view.name} and {view_n.name}.")
+            view.tracked_pts[view_n.id] = (match[0], match[1])
+            view_n.tracked_pts[view.id] = (match[1], match[0])
 
-    position = []
-    rotation = []
+            for i, point in enumerate(match[1]):
+                point = tuple(point.tolist())
+                if point in view_n.world_points:
+                    point_3d = view_n.world_points[point]
+                    if view.id != 'view_e5f42324df04' and view.id != 'view_3e4586ecadd8':
+                        point_3d = view_n.world_points[point].reshape((1, 3))
+                    points_2d.append(match[0][i])
+                    points_3d = np.append(points_3d, point_3d)
+        # print(points_3d)
+        logging.info(f"Found {len(points_2d)} 3D points in {view_n.name} matching {view.name}.")
+    points_3d = points_3d.reshape((len(points_2d), 3))
+    points_2d = np.array(points_2d)
+    print(points_3d.shape, points_2d.shape)
+    if view.name == 'img0010':
+        points_3d = points_3d[:1000]
+        points_2d = points_2d[:1000]
+    _, rotation, translation, _ = cv.solvePnPRansac(points_3d, points_2d, K, dist)
+    # PnP spits out a Rotation vector. Convert to Rotation matrix and check validity.
+    rotation, _ = cv.Rodrigues(rotation)
 
-    return position, rotation
+    if check_determinant(rotation):
+        rotation = -rotation
+    return rotation, translation
 
 
 def get_paths_from_txt(filename):
@@ -213,3 +249,37 @@ def get_paths_from_txt(filename):
     image_paths = [x.strip() for x in image_paths]
     logging.info(f"{len(image_paths)} images found.")
     return image_paths
+
+
+def store_3Dpoints_to_views(X, view1, view2):
+    """
+    Stores 3D points to the two views that were used to triangulate them.
+    :param view1: First view used to triangulate 3D points.
+    :param view2: Second view used to triangulate 3D points.
+    :param X: 3D points to store
+    """
+    view1_points = view1.tracked_pts[view2.id][0]  # points in view1 that have an associated 3D point X
+    view2_points = view2.tracked_pts[view1.id][0]
+
+    view1_points = [tuple(x) for x in view1_points.tolist()]
+    view2_points = [tuple(x) for x in view2_points.tolist()]
+
+    for i in range(len(X)):
+        view1.world_points[view1_points[i]] = X[i]
+        view2.world_points[view2_points[i]] = X[i]
+
+
+def remove_outliers(view1, view2):
+    """
+    Removes outliers between two views by using Fundamental matrix. Used before point triangulation.
+    :param view1:
+    :param view2:
+    :return:
+    """
+    X1, X2 = view1.tracked_pts[view2.id]
+    FM_METHOD = cv.FM_RANSAC
+
+    fundamental_mat, mask = cv.findFundamentalMat(X1, X2, method=FM_METHOD)
+    view1.tracked_pts[view2.id] = (X1[mask.ravel() == 1], X2[mask.ravel() == 1])
+    view2.tracked_pts[view1.id] = (X2[mask.ravel() == 1], X1[mask.ravel() == 1])
+    return view1.tracked_pts[view2.id][0], view2.tracked_pts[view1.id][0]

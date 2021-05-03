@@ -12,8 +12,8 @@ NN_RATIO_THRESHOLD = 0.75
 NUM_NEAREST_NEIGHBOURS = 2
 
 # Read images
-img1 = cv.imread('try14.jpg', cv.IMREAD_GRAYSCALE)
-img2 = cv.imread('try15.jpg', cv.IMREAD_GRAYSCALE)
+img1 = cv.imread('image_001.jpg', cv.IMREAD_GRAYSCALE)
+img2 = cv.imread('image_002.jpg', cv.IMREAD_GRAYSCALE)
 
 if img1 is None or img2 is None:
     raise FileNotFoundError('Could not find images!')
@@ -24,6 +24,9 @@ sift = cv.SIFT_create()
 # Detect keypoints on images and find descriptors
 kp1, descriptors1 = sift.detectAndCompute(img1, None)
 kp2, descriptors2 = sift.detectAndCompute(img2, None)
+
+keyp1 = np.array([kp1[idx].pt for idx in range(0, len(kp1))], dtype=np.float32).reshape(-1, 2)
+
 
 # BFMatcher with k=2
 bf = cv.BFMatcher()

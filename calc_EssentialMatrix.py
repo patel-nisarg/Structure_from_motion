@@ -20,8 +20,8 @@ C2, R2 = camera_pose_extraction(E)
 X_4 = []
 for i in range(len(R2)):
     C_2 = np.expand_dims(C2[i], axis=1)
-    X_4.append(linear_triangulation(K, C1, R1, C_2, R2[i], x1, x2))
+    X_4.append(linear_triangulation(K, C1, R1, C_2, R2[i], x1, x2, inhomogeneous=False))
 
 # The correct camera pose
-X = pose_disambiguation(C2, R2, X_4)
+X, R = pose_disambiguation(C2, R2, X_4)
 

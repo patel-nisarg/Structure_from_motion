@@ -13,8 +13,8 @@ FM_METHOD = cv.FM_RANSAC
 data = np.load(correspondences_file)
 
 # Load points from two images
-X1_original = np.int32(data['X1'])
-X2_original = np.int32(data['X2'])
+X1_original = np.float32(data['X1'])
+X2_original = np.float32(data['X2'])
 
 # Calculate fundamental matrix and get mask
 F, mask = cv.findFundamentalMat(X1_original, X2_original,
