@@ -1,0 +1,15 @@
+INFO:root:Reading image paths text file...
+INFO:root:11 images found.
+INFO:root:img0002 from filepath F:\Documents\SFM_Project\images\images\img0002.jpg opened successfully.
+INFO:root:img0008 from filepath F:\Documents\SFM_Project\images\images\img0008.jpg opened successfully.
+INFO:root:Features for img0002 found.
+INFO:root:Features for img0008 found.
+INFO:root:Generating feature matches between img0002 and img0008.
+INFO:root:4376 matches found.
+INFO:root:194 good matches found from 4376 matches.
+INFO:root:Found empty world points set. Appending 3D coordinates from baseline...
+INFO:root:Appended 69 3D points to world coordinates set.
+INFO:root:img0000 from filepath F:\Documents\SFM_Project\images\images\img0000.jpg opened successfully.
+INFO:root:Features for img0000 found.
+INFO:root:977 good matches found from 3798 matches between img0000 and img0002.
+INFO:root:Sufficient homography found between img0000 and img0002.

@@ -1,0 +1,279 @@
+INFO:root:Reading image paths text file...
+INFO:root:11 images found.
+INFO:root:img0002 from filepath F:\Documents\SFM_Project\images\images\img0002.jpg opened successfully.
+INFO:root:img0008 from filepath F:\Documents\SFM_Project\images\images\img0008.jpg opened successfully.
+INFO:root:Existing features for img0002 found in features directory.
+INFO:root:Existing features for img0008 found in features directory.
+INFO:root:Generating feature matches between img0002 and img0008.
+INFO:root:4376 matches found.
+INFO:root:194 good matches found from 4376 matches.
+INFO:root:Found empty world points set. Appending 3D coordinates from baseline...
+INFO:root:Appended 69 3D points to world coordinates set.
+INFO:root:img0000 from filepath F:\Documents\SFM_Project\images\images\img0000.jpg opened successfully.
+INFO:root:Existing features for img0000 found in features directory.
+INFO:root:977 good matches found from 3798 matches between img0000 and img0002.
+INFO:root:Sufficient homography found between img0000 and img0002.
+INFO:root:Found 30 3D points in img0002 matching img0000.
+INFO:root:132 good matches found from 3798 matches between img0000 and img0008.
+INFO:root:Sufficient homography found between img0000 and img0008.
+INFO:root:Found 47 3D points in img0008 matching img0000.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 868 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 32 3D points to world coordinates set.
+INFO:root:img0001 from filepath F:\Documents\SFM_Project\images\images\img0001.jpg opened successfully.
+INFO:root:Existing features for img0001 found in features directory.
+INFO:root:2022 good matches found from 4405 matches between img0001 and img0002.
+INFO:root:Sufficient homography found between img0001 and img0002.
+INFO:root:Found 835 3D points in img0002 matching img0001.
+INFO:root:170 good matches found from 4405 matches between img0001 and img0008.
+INFO:root:Sufficient homography found between img0001 and img0008.
+INFO:root:Found 871 3D points in img0008 matching img0001.
+INFO:root:1732 good matches found from 4405 matches between img0001 and img0000.
+INFO:root:Sufficient homography found between img0001 and img0000.
+INFO:root:Found 1670 3D points in img0000 matching img0001.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 1882 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 23 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 1564 3D points to world coordinates set.
+INFO:root:img0003 from filepath F:\Documents\SFM_Project\images\images\img0003.jpg opened successfully.
+INFO:root:Existing features for img0003 found in features directory.
+INFO:root:2216 good matches found from 4617 matches between img0003 and img0002.
+INFO:root:Sufficient homography found between img0003 and img0002.
+INFO:root:Found 1472 3D points in img0002 matching img0003.
+INFO:root:265 good matches found from 4617 matches between img0003 and img0008.
+INFO:root:Sufficient homography found between img0003 and img0008.
+INFO:root:Found 1532 3D points in img0008 matching img0003.
+INFO:root:662 good matches found from 4617 matches between img0003 and img0000.
+INFO:root:Sufficient homography found between img0003 and img0000.
+INFO:root:Found 2125 3D points in img0000 matching img0003.
+INFO:root:1391 good matches found from 4617 matches between img0003 and img0001.
+INFO:root:Sufficient homography found between img0003 and img0001.
+INFO:root:Found 3395 3D points in img0001 matching img0003.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 2062 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 129 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 499 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 1263 3D points to world coordinates set.
+INFO:root:img0004 from filepath F:\Documents\SFM_Project\images\images\img0004.jpg opened successfully.
+INFO:root:Existing features for img0004 found in features directory.
+INFO:root:1433 good matches found from 4583 matches between img0004 and img0002.
+INFO:root:Sufficient homography found between img0004 and img0002.
+INFO:root:Found 1347 3D points in img0002 matching img0004.
+INFO:root:394 good matches found from 4583 matches between img0004 and img0008.
+INFO:root:Sufficient homography found between img0004 and img0008.
+INFO:root:Found 1473 3D points in img0008 matching img0004.
+INFO:root:454 good matches found from 4583 matches between img0004 and img0000.
+INFO:root:Sufficient homography found between img0004 and img0000.
+INFO:root:Found 1874 3D points in img0000 matching img0004.
+INFO:root:871 good matches found from 4583 matches between img0004 and img0001.
+INFO:root:Sufficient homography found between img0004 and img0001.
+INFO:root:Found 2710 3D points in img0001 matching img0004.
+INFO:root:2078 good matches found from 4583 matches between img0004 and img0003.
+INFO:root:Sufficient homography found between img0004 and img0003.
+INFO:root:Found 4299 3D points in img0003 matching img0004.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 1319 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 254 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 323 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 729 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 1964 3D points to world coordinates set.
+INFO:root:img0005 from filepath F:\Documents\SFM_Project\images\images\img0005.jpg opened successfully.
+INFO:root:Existing features for img0005 found in features directory.
+INFO:root:984 good matches found from 4183 matches between img0005 and img0002.
+INFO:root:Sufficient homography found between img0005 and img0002.
+INFO:root:Found 949 3D points in img0002 matching img0005.
+INFO:root:617 good matches found from 4183 matches between img0005 and img0008.
+INFO:root:Sufficient homography found between img0005 and img0008.
+INFO:root:Found 1195 3D points in img0008 matching img0005.
+INFO:root:353 good matches found from 4183 matches between img0005 and img0000.
+INFO:root:Sufficient homography found between img0005 and img0000.
+INFO:root:Found 1501 3D points in img0000 matching img0005.
+INFO:root:617 good matches found from 4183 matches between img0005 and img0001.
+INFO:root:Sufficient homography found between img0005 and img0001.
+INFO:root:Found 2091 3D points in img0001 matching img0005.
+INFO:root:1476 good matches found from 4183 matches between img0005 and img0003.
+INFO:root:Sufficient homography found between img0005 and img0003.
+INFO:root:Found 3474 3D points in img0003 matching img0005.
+INFO:root:2237 good matches found from 4183 matches between img0005 and img0004.
+INFO:root:Sufficient homography found between img0005 and img0004.
+INFO:root:Found 5127 3D points in img0004 matching img0005.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 818 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 425 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 229 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 495 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 1346 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 2110 3D points to world coordinates set.
+INFO:root:img0006 from filepath F:\Documents\SFM_Project\images\images\img0006.jpg opened successfully.
+INFO:root:Existing features for img0006 found in features directory.
+INFO:root:667 good matches found from 4817 matches between img0006 and img0002.
+INFO:root:Sufficient homography found between img0006 and img0002.
+INFO:root:Found 634 3D points in img0002 matching img0006.
+INFO:root:1133 good matches found from 4817 matches between img0006 and img0008.
+INFO:root:Sufficient homography found between img0006 and img0008.
+INFO:root:Found 1098 3D points in img0008 matching img0006.
+INFO:root:320 good matches found from 4817 matches between img0006 and img0000.
+INFO:root:Sufficient homography found between img0006 and img0000.
+INFO:root:Found 1360 3D points in img0000 matching img0006.
+INFO:root:494 good matches found from 4817 matches between img0006 and img0001.
+INFO:root:Sufficient homography found between img0006 and img0001.
+INFO:root:Found 1814 3D points in img0001 matching img0006.
+INFO:root:1028 good matches found from 4817 matches between img0006 and img0003.
+INFO:root:Sufficient homography found between img0006 and img0003.
+INFO:root:Found 2806 3D points in img0003 matching img0006.
+INFO:root:1586 good matches found from 4817 matches between img0006 and img0004.
+INFO:root:Sufficient homography found between img0006 and img0004.
+INFO:root:Found 4285 3D points in img0004 matching img0006.
+INFO:root:2269 good matches found from 4817 matches between img0006 and img0005.
+INFO:root:Sufficient homography found between img0006 and img0005.
+INFO:root:Found 6096 3D points in img0005 matching img0006.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 502 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 885 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 173 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 327 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 891 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 1273 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 2035 3D points to world coordinates set.
+INFO:root:img0007 from filepath F:\Documents\SFM_Project\images\images\img0007.jpg opened successfully.
+INFO:root:Existing features for img0007 found in features directory.
+INFO:root:401 good matches found from 4277 matches between img0007 and img0002.
+INFO:root:Sufficient homography found between img0007 and img0002.
+INFO:root:Found 378 3D points in img0002 matching img0007.
+INFO:root:1772 good matches found from 4277 matches between img0007 and img0008.
+INFO:root:Sufficient homography found between img0007 and img0008.
+INFO:root:Found 1297 3D points in img0008 matching img0007.
+INFO:root:240 good matches found from 4277 matches between img0007 and img0000.
+INFO:root:Sufficient homography found between img0007 and img0000.
+INFO:root:Found 1500 3D points in img0000 matching img0007.
+INFO:root:327 good matches found from 4277 matches between img0007 and img0001.
+INFO:root:Sufficient homography found between img0007 and img0001.
+INFO:root:Found 1798 3D points in img0001 matching img0007.
+INFO:root:605 good matches found from 4277 matches between img0007 and img0003.
+INFO:root:Sufficient homography found between img0007 and img0003.
+INFO:root:Found 2347 3D points in img0003 matching img0007.
+INFO:root:997 good matches found from 4277 matches between img0007 and img0004.
+INFO:root:Sufficient homography found between img0007 and img0004.
+INFO:root:Found 3252 3D points in img0004 matching img0007.
+INFO:root:1434 good matches found from 4277 matches between img0007 and img0005.
+INFO:root:Sufficient homography found between img0007 and img0005.
+INFO:root:Found 4600 3D points in img0005 matching img0007.
+INFO:root:2262 good matches found from 4277 matches between img0007 and img0006.
+INFO:root:Sufficient homography found between img0007 and img0006.
+INFO:root:Found 6453 3D points in img0006 matching img0007.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 268 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 1541 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 134 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 204 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 457 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 817 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 1272 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 1932 3D points to world coordinates set.
+INFO:root:img0009 from filepath F:\Documents\SFM_Project\images\images\img0009.jpg opened successfully.
+INFO:root:Existing features for img0009 found in features directory.
+INFO:root:192 good matches found from 6509 matches between img0009 and img0002.
+INFO:root:Sufficient homography found between img0009 and img0002.
+INFO:root:Found 147 3D points in img0002 matching img0009.
+INFO:root:2410 good matches found from 6509 matches between img0009 and img0008.
+INFO:root:Sufficient homography found between img0009 and img0008.
+INFO:root:Found 1320 3D points in img0008 matching img0009.
+INFO:root:160 good matches found from 6509 matches between img0009 and img0000.
+INFO:root:Sufficient homography found between img0009 and img0000.
+INFO:root:Found 1407 3D points in img0000 matching img0009.
+INFO:root:161 good matches found from 6509 matches between img0009 and img0001.
+INFO:root:Sufficient homography found between img0009 and img0001.
+INFO:root:Found 1525 3D points in img0001 matching img0009.
+INFO:root:192 good matches found from 6509 matches between img0009 and img0003.
+INFO:root:Sufficient homography found between img0009 and img0003.
+INFO:root:Found 1665 3D points in img0003 matching img0009.
+INFO:root:245 good matches found from 6509 matches between img0009 and img0004.
+INFO:root:Sufficient homography found between img0009 and img0004.
+INFO:root:Found 1857 3D points in img0004 matching img0009.
+INFO:root:372 good matches found from 6509 matches between img0009 and img0005.
+INFO:root:Sufficient homography found between img0009 and img0005.
+INFO:root:Found 2188 3D points in img0005 matching img0009.
+INFO:root:621 good matches found from 6509 matches between img0009 and img0006.
+INFO:root:Sufficient homography found between img0009 and img0006.
+INFO:root:Found 2712 3D points in img0006 matching img0009.
+INFO:root:957 good matches found from 6509 matches between img0009 and img0007.
+INFO:root:Sufficient homography found between img0009 and img0007.
+INFO:root:Found 3563 3D points in img0007 matching img0009.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 23 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 1941 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 17 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 15 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 50 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 135 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 207 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 428 3D points to world coordinates set.
+INFO:root:Appending 3D coordinates to existing world points set...
+INFO:root:Appended 675 3D points to world coordinates set.
+INFO:root:img0010 from filepath F:\Documents\SFM_Project\images\images\img0010.jpg opened successfully.
+INFO:root:Existing features for img0010 found in features directory.
+INFO:root:197 good matches found from 7389 matches between img0010 and img0002.
+INFO:root:Sufficient homography found between img0010 and img0002.
+INFO:root:Found 145 3D points in img0002 matching img0010.
+INFO:root:961 good matches found from 7389 matches between img0010 and img0008.
+INFO:root:Sufficient homography found between img0010 and img0008.
+INFO:root:Found 891 3D points in img0008 matching img0010.
+INFO:root:161 good matches found from 7389 matches between img0010 and img0000.
+INFO:root:Sufficient homography found between img0010 and img0000.
+INFO:root:Found 968 3D points in img0000 matching img0010.
+INFO:root:197 good matches found from 7389 matches between img0010 and img0001.
+INFO:root:Sufficient homography found between img0010 and img0001.
+INFO:root:Found 1094 3D points in img0001 matching img0010.
+INFO:root:162 good matches found from 7389 matches between img0010 and img0003.
+INFO:root:Sufficient homography found between img0010 and img0003.
+INFO:root:Found 1217 3D points in img0003 matching img0010.
+INFO:root:203 good matches found from 7389 matches between img0010 and img0004.
+INFO:root:Sufficient homography found between img0010 and img0004.
+INFO:root:Found 1359 3D points in img0004 matching img0010.
+INFO:root:232 good matches found from 7389 matches between img0010 and img0005.
+INFO:root:Sufficient homography found between img0010 and img0005.
+INFO:root:Found 1541 3D points in img0005 matching img0010.
+INFO:root:299 good matches found from 7389 matches between img0010 and img0006.
+INFO:root:Sufficient homography found between img0010 and img0006.
+INFO:root:Found 1753 3D points in img0006 matching img0010.
+INFO:root:404 good matches found from 7389 matches between img0010 and img0007.
+INFO:root:Sufficient homography found between img0010 and img0007.
+INFO:root:Found 2082 3D points in img0007 matching img0010.
+INFO:root:2500 good matches found from 7389 matches between img0010 and img0009.
+INFO:root:Sufficient homography found between img0010 and img0009.
+INFO:root:Found 3166 3D points in img0009 matching img0010.
