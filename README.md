@@ -61,6 +61,6 @@ utils.py
   - Triangulates 3D points based on normalized 2D points and projection matrices for two views 
   - returns 3D points as (N x 3)
 - compute_pose
-  - 
+  - compu
   
 
