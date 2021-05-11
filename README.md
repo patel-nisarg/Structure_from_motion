@@ -68,5 +68,5 @@ utils.py
   - Calculates pose using cv.solvePnPRansac and the points_3d/points_2d
 - store_3Dpoints_to_views
   - Stores 3D points to World_points dictonary within the view object.
-  -  
+  - 
 
