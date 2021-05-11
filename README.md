@@ -18,3 +18,18 @@ main.py
     - If view is in a completed view's tracked points (meaning their 2D point correspondences have been generated), then remove outliers between point correspondences
     - Triangulate points between view and completed views
     - Store 3D points in View object as well as World Points Set object
+
+baseline.py
+
+- Feature match the two baseline views 
+- Calculate fundamental matrix
+- Calculate essential matrix
+- Set pose for view1 to be R = I_3 and t = (0, 0, 0)
+- Calculate 4 possible poses for view2 using camera_pose_extraction(essential_matrix) found in utils.py
+- Triangulate 3D points between view1 and four possible poses of view2
+- Disambiguate poses by finding the pose that minimizes reprojection error
+- Add 3D points to World Points Set object
+
+
+view.py
+- 
