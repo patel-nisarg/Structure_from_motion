@@ -32,4 +32,8 @@ baseline.py
 
 
 view.py
+- Contains class for View object
+- Features for the image are extracted here (unless features are for baseline views which are extracted in baseline.py)
 - 
+
+
