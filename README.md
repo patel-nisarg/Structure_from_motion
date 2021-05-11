@@ -1,8 +1,8 @@
 # SFM from CAD Model
  3D reconstruction of a 3D printed CAD model.
 
-**main.py
-**
+main.py
+
 - Loads image paths from a text file of images paths. 
 - Initializes camera calibration data
      - For OpenMVG images I posted, calibration data is only K matrix in K.txt
@@ -21,8 +21,8 @@
   - completed_views is a list containing pointers to View objects that have been reconstructed
   - Once 3D points are appended to their respective source views and the world point set, bundle adjustment is applied.
 
-**baseline.py
-**
+baseline.py
+
 - Feature match the two baseline views 
 - Calculate fundamental matrix
 - Calculate essential matrix
@@ -33,8 +33,9 @@
 - Add 3D points to World Points Set object
 
 
-**view.py
-**- Contains class for View object
+view.py
+
+- Contains class for View object
 - Features for the image are extracted here (unless features are for baseline views which are extracted in baseline.py)
 - Rotation matrix stored in view as (3 x 3). During BA, this is converted to Euler angles vector (3 x 1) using Rodrigues.
 - WorldPoints are stored in each View like so: {(view1_kp1):3d_point,..., (view1_kp2):3d_point}
@@ -42,12 +43,12 @@
    - Each View has an ID associated to it in the form of a hashed string. TrackedPoints takes another View's ID as a key and assigns a tuple containing keypoint matches between the two views.
    - These keypoint matches are used for computing pose via PnP and later filtered using a fundamental matrix between the two views prior to triangulation.
 
-**WorldPoints.py
-**
+WorldPoints.py
+
 - Stores 3D points, the Views/images that created those 3D points, and the 2D keypoints from the two Views that created it
 
-**utils.py
-**
+utils.py
+
 
 - feature_match
   - Matches features between two views using BF matcher and stores the good results(Lowe's criteria) in view1.tracked_pts and view2.tracked_pts
