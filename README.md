@@ -46,7 +46,21 @@ WorldPoints.py
 
 - Stores 3D points, the Views/images that created those 3D points, and the 2D keypoints from the two Views that created it
 
-bundle_adjustment.py
+utils.py
 
-- 
+- feature_match
+  - Matches features between two views using BF matcher and stores the good results(Lowe's criteria) in view1.tracked_pts and view2.tracked_pts
+- camera_pose_extraction
+  - Takes essential matrix from baseline and returns 4 possible camera poses for second baseline view
+  - Checks determinant of rotation matrix to see if it equals 1. If it is -1 then flips sign on rotation matrix and translation vector
+- pose_disambiguation
+  - Checks reprojection error for the 4 poses from second baseline view and triangulated 3D points from each of the four poses
+  - returns the 3D points, rotation matrix, and translation vector that minimizes this reprojection error
+- triangulate_points
+  - Normalizes 2D points in homogeneous coordinates by multiplying them by inverse of intrinsic calibration matrix
+  - Triangulates 3D points based on normalized 2D points and projection matrices for two views 
+  - returns 3D points as (N x 3)
+- compute_pose
+  - 
+  
 
