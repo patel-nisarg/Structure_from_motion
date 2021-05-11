@@ -18,6 +18,7 @@ main.py
     - If view is in a completed view's tracked points (meaning their 2D point correspondences have been generated), then remove outliers between point correspondences
     - Triangulate points between view and completed views
     - Store 3D points in View object as well as World Points Set object
+  - completed_views is a list containing pointers to View objects that have been reconstructed
   - Once 3D points are appended to their respective source views and the world point set, bundle adjustment is applied.
 
 baseline.py
@@ -40,5 +41,12 @@ view.py
 - TrackedPoints are matched points between two images. They are stored for example as view1.tracked_pts = {'view2_id':(view1 kps, view2kps), 'view3_id':(view1kps, view3kps), ..., 'viewn_id':(view1kps, viewnkps)}
    - Each View has an ID associated to it in the form of a hashed string. TrackedPoints takes another View's ID as a key and assigns a tuple containing keypoint matches between the two views.
    - These keypoint matches are used for computing pose via PnP and later filtered using a fundamental matrix between the two views prior to triangulation.
-   - 
+
+WorldPoints.py
+
+- Stores 3D points, the Views/images that created those 3D points, and the 2D keypoints from the two Views that created it
+
+bundle_adjustment.py
+
+- 
 
