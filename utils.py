@@ -19,7 +19,7 @@ def feature_match(view1, view2, matcher_type="bf", NUM_NEAREST_NEIGHBOURS=2, hom
     :return: amount_overlap: amount of keypoint overlap. Ranges from 0 to 1.
     """
     if matcher_type == "flann":
-        FLANN_INDEX_KDTREE = 0
+        FLANN_INDEX_KDTREE = 1
         index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
         search_params = dict(checks=50)
         matcher = cv.FlannBasedMatcher(index_params, search_params)
@@ -67,7 +67,7 @@ def feature_match(view1, view2, matcher_type="bf", NUM_NEAREST_NEIGHBOURS=2, hom
     return None
 
 
-def check_determinant(R, threshold=1e-7):
+def check_determinant(R, threshold=1e-9):
     """
     :param R: Rotation matrix (3x3)
     :param threshold: Radius within -1 to check for
@@ -75,7 +75,7 @@ def check_determinant(R, threshold=1e-7):
     """
     det = np.linalg.det(R)
 
-    if det + 1 < threshold:
+    if det + 1.0 < threshold:
         return False
     else:
         return True
@@ -90,25 +90,26 @@ def camera_pose_extraction(E):
                   [1, 0, 0],
                   [0, 0, 1]])
     U, D, V = np.linalg.svd(E)
-    C1 = U[:, -1]
-    R1 = U @ W @ V.T
+    C1 = U[:, -1].reshape((3, 1))
+    R1 = U @ W @ V
 
-    C2 = -U[:, -1]
-    R2 = U @ W @ V.T
+    C2 = -U[:, -1].reshape((3, 1))
+    R2 = U @ W @ V
 
-    C3 = U[:, -1]
-    R3 = U @ W.T @ V.T
+    C3 = U[:, -1].reshape((3, 1))
+    R3 = U @ W.T @ V
 
-    C4 = -U[:, -1]
-    R4 = U @ W.T @ V.T
+    C4 = -U[:, -1].reshape((3, 1))
+    R4 = U @ W.T @ V
 
-    C = np.asarray([C1, C2, C3, C4], dtype=np.float32)
-    R = np.asarray([R1, R2, R3, R4], dtype=np.float32)
+    C = np.asarray([C1, C2, C3, C4], dtype=np.float64)
+    R = np.asarray([R1, R2, R3, R4], dtype=np.float64)
 
     for i in range(len(R)):
-        if check_determinant(R[i]):
+        if not check_determinant(R[i]):
             R[i] = -R[i]
             C[i] = -C[i]
+
     return C, R
 
 
@@ -118,7 +119,7 @@ def vec2skew(v):
             [-v[2], v[0], 0]]
 
 
-def linear_triangulation(K, C1, R1, C2, R2, x1, x2, inhomogeneous=True):
+def baseline_triangulation(K, C1, R1, C2, R2, x1, x2, inhomogeneous=True):
     """LinearTriangulation
     Find 3D positions of the point correspondences using the relative
     position of one camera from another
@@ -134,22 +135,25 @@ def linear_triangulation(K, C1, R1, C2, R2, x1, x2, inhomogeneous=True):
     Outputs:
       X - size (N x 3) OR (N x 4) matrix who's rows represent the 3D triangulated
         points"""
-    P1 = K @ np.hstack((R1, -R1 @ C1))
-    P2 = K @ np.hstack((R2, -R2 @ C2))
+    logging.info("Triangulating baseline views...")
+    P1 = K @ np.hstack((R1, C1))
+    P2 = K @ np.hstack((R2, C2.reshape((3, 1))))
     X = np.zeros((len(x1), 4))
     for i in range(len(x1)):
         pt1 = vec2skew(np.append(x1[i], 1))
         pt2 = vec2skew(np.append(x2[i], 1))
         A = np.concatenate((pt1 @ np.asarray(P1), pt2 @ np.asarray(P2)), axis=0)
         _, _, V = np.linalg.svd(A)
-        X[i] = V[:, -1] / V[-1, -1]
+        X[i] = V.T[:, -1] / V.T[-1, -1]
     if inhomogeneous:
         X = np.delete(X, -1, 1)
     return X
 
 
-def pose_disambiguation(C_set, R_set, X_set):
+def pose_disambiguation(x2, K, C2, R2, X_n):
     """
+    Returns the pose that minimizes reprojection error.
+
     (INPUT) Cset and Rset: four configurations of camera centers and rotations
     (INPUT) Xset: four sets of triangulated points from four camera pose configurations
     (OUTPUT) C and R: the correct camera pose
@@ -161,40 +165,62 @@ def pose_disambiguation(C_set, R_set, X_set):
     satisfy this condition due to the presence of correspondence noise. The best camera
     configuration, (C, R, X) is the one that produces the maximum number of points satisfying
     the chirality condition. """
+    reprojection_error = []
+    for j, X_set in enumerate(X_n):
+        X_set_error = []
+        for i, point_3d in enumerate(X_set):
+            error, reprojected_pt = calculate_reprojection_error(point_3d, x2[i], K, R2[j],
+                                                                 C2[j])
+            # if error > 50.0:
+            #     print(x2[i], reprojected_pt)
+            X_set_error.append(error)
+        reprojection_error.append(np.mean(X_set_error))
+    #print(reprojection_error)
+    X = X_n[np.argmin(reprojection_error)]
+    R = R2[np.argmin(reprojection_error)]
+    C = C2[np.argmin(reprojection_error)]
 
-    def check_chirality(C, R, X):
-        """For each point in X, checks the condition that r_3(X-C) > 0.
-        Returns the total number of points in X that meets this condition."""
-        num_points = 0
-        for x in X:
-            if R[:, -1] @ (x[:-1] - C) < 0:
-                num_points += 1
-        return num_points
+    # def check_chirality(C, R, X):
+    #     """For each point in X, checks the condition that r_3(X-C) > 0.
+    #     Returns the total number of points in X that meets this condition."""
+    #     num_points = 0
+    #     for x in X:
+    #         if R[:, -1] @ (x[:-1] - C) < 0:
+    #             num_points += 1
+    #     return num_points
+    #
+    # condition_met = []
+    # for i in range(len(R_set)):
+    #     condition_met.append(check_chirality(C_set[i], R_set[i], X_set[i]))
+    #
+    # X = np.delete(X_set[np.argmax(condition_met)], -1, 1)
+    # R = R_set[np.argmax(condition_met)]
+    # print(X.shape)
+    return X, R, C
 
-    condition_met = []
-    for i in range(len(R_set)):
-        condition_met.append(check_chirality(C_set[i], R_set[i], X_set[i]))
 
-    X = np.delete(X_set[np.argmax(condition_met)], -1, 1)
-    R = R_set[np.argmax(condition_met)]
-    return X, R
-
-
-# Does not seem to work. Throws memory error.
-def triangulate_points(K, t1, R1, t2, R2, x1, x2):
-    P1 = K @ np.hstack((R1, t1))
-    P2 = K @ np.hstack((R2, t2))
-    print(f" R1: {R1.shape}, R2:{R2.shape}, t1: {t1.shape}, t2:{t2.shape}, x1: {x1.T.shape}, x2: {x2.T.shape}.")
-    x1 = x1.T
-    x2 = x2.T
-    X = cv.triangulatePoints(P1, P2, x1, x2)
+def triangulate_points(K, t1, R1, t2, R2, x1, x2, print_error=False):
+    logging.info("Triangulating 3D points...")
+    K_inv = np.linalg.inv(K)
+    P1 = np.hstack((R1, t1))
+    P2 = np.hstack((R2, t2.reshape((3, 1))))
+    u1 = cv.convertPointsToHomogeneous(x1)
+    u2 = cv.convertPointsToHomogeneous(x2)
+    # P1 = K @ np.hstack((R1, t1))
+    # P2 = K @ np.hstack((R2, t2.reshape((3, 1))))
+    # x1 = x1.T
+    # x2 = x2.T
+    u1_n = np.empty((0, 3))
+    u2_n = np.empty((0, 3))
+    for i in range(len(u1)):
+        u1_n = np.append(u1_n, (K_inv @ u1[i].T).T, axis=0)
+        u2_n = np.append(u2_n, (K_inv @ u2[i].T).T, axis=0)
+    u1_n = cv.convertPointsFromHomogeneous(u1_n)
+    u2_n = cv.convertPointsFromHomogeneous(u2_n)
+    X = cv.triangulatePoints(projMatr1=P1, projMatr2=P2, projPoints1=u1_n, projPoints2=u2_n)
     X = cv.convertPointsFromHomogeneous(X.T)
-    print(f"3D Points shape: {X.shape}")
+
     return X
-
-
-def visualize_pt_cloud(world_coords):
-    pass
 
 
 def compute_pose(view, completed_views, K, dist):
@@ -213,32 +239,30 @@ def compute_pose(view, completed_views, K, dist):
     for view_n in completed_views:
         match = feature_match(view, view_n)
         if match is not None:
-            logging.info(f"Sufficient homography found between {view.name} and {view_n.name}.")
-            view.tracked_pts[view_n.id] = (match[0], match[1])
-            view_n.tracked_pts[view.id] = (match[1], match[0])
+            logging.info(f"Sufficient matches found between {view.name} and {view_n.name}.")
 
             for i, point in enumerate(match[1]):
                 point = tuple(point.tolist())
                 if point in view_n.world_points:
                     point_3d = view_n.world_points[point]
-                    if view.id != 'view_e5f42324df04' and view.id != 'view_3e4586ecadd8':
-                        point_3d = view_n.world_points[point].reshape((1, 3))
                     points_2d.append(match[0][i])
                     points_3d = np.append(points_3d, point_3d)
         # print(points_3d)
         logging.info(f"Found {len(points_2d)} 3D points in {view_n.name} matching {view.name}.")
+
     points_3d = points_3d.reshape((len(points_2d), 3))
     points_2d = np.array(points_2d)
-    print(points_3d.shape, points_2d.shape)
-    if view.name == 'img0010':
-        points_3d = points_3d[:1000]
-        points_2d = points_2d[:1000]
-    _, rotation, translation, _ = cv.solvePnPRansac(points_3d, points_2d, K, dist)
+    #print(points_3d.shape, points_2d.shape)
+
+    reprojection_Error = 8.0
+    _, rotation, translation, _ = cv.solvePnPRansac(points_3d, points_2d, K, None, confidence=0.99,
+                                                    reprojectionError=reprojection_Error, flags=cv.SOLVEPNP_EPNP)
     # PnP spits out a Rotation vector. Convert to Rotation matrix and check validity.
     rotation, _ = cv.Rodrigues(rotation)
 
     if check_determinant(rotation):
         rotation = -rotation
+    logging.info(f"Pose for {view.name} calculated.")
     return rotation, translation
 
 
@@ -251,22 +275,24 @@ def get_paths_from_txt(filename):
     return image_paths
 
 
-def store_3Dpoints_to_views(X, view1, view2):
+def store_3Dpoints_to_views(X, view1, view2, K, store_low_rpr=False):
     """
     Stores 3D points to the two views that were used to triangulate them.
     :param view1: First view used to triangulate 3D points.
     :param view2: Second view used to triangulate 3D points.
     :param X: 3D points to store
     """
-    view1_points = view1.tracked_pts[view2.id][0]  # points in view1 that have an associated 3D point X
-    view2_points = view2.tracked_pts[view1.id][0]
-
-    view1_points = [tuple(x) for x in view1_points.tolist()]
-    view2_points = [tuple(x) for x in view2_points.tolist()]
-
-    for i in range(len(X)):
-        view1.world_points[view1_points[i]] = X[i]
-        view2.world_points[view2_points[i]] = X[i]
+    view1_points = np.array(view1.tracked_pts[view2.id][0]) # points in view1 that have an associated 3D point X
+    view2_points = np.array(view2.tracked_pts[view1.id][0])
+    #print(view1_points.shape, view2_points.shape)
+    for i, point_3d in enumerate(X):
+        error1, reproj_pt1 = calculate_reprojection_error(point_3d, view1_points[i][:, np.newaxis], K, view1.rotation,
+                                                          view1.translation)
+        error2, reproj_pt2 = calculate_reprojection_error(point_3d, view2_points[i][:, np.newaxis], K, view2.rotation,
+                                                          view2.translation)
+        if error1 < 40.0 and error2 < 40.0:
+            view1.world_points[tuple(view1_points[i])] = X[i].reshape((1, 3))
+            view2.world_points[tuple(view2_points[i])] = X[i].reshape((1, 3))
 
 
 def remove_outliers(view1, view2):
@@ -276,10 +302,28 @@ def remove_outliers(view1, view2):
     :param view2:
     :return:
     """
+
     X1, X2 = view1.tracked_pts[view2.id]
     FM_METHOD = cv.FM_RANSAC
 
     fundamental_mat, mask = cv.findFundamentalMat(X1, X2, method=FM_METHOD)
     view1.tracked_pts[view2.id] = (X1[mask.ravel() == 1], X2[mask.ravel() == 1])
     view2.tracked_pts[view1.id] = (X2[mask.ravel() == 1], X1[mask.ravel() == 1])
+
     return view1.tracked_pts[view2.id][0], view2.tracked_pts[view1.id][0]
+
+
+def calculate_reprojection_error(point_3D, point_2D, K, R, t):
+    """Calculates the reprojection error for a 3D point by projecting it back into the image plane"""
+    point_2D = point_2D.reshape((2, 1))
+    point_3D = point_3D.reshape((3, 1))
+    # print(K.shape, R.shape, point_3D.shape, t.shape)
+    reprojected_point = K.dot(R.dot(point_3D) + t.reshape((3, 1)))
+    reprojected_point = cv.convertPointsFromHomogeneous(reprojected_point.T)[:, 0, :].T
+    # print(point_2D, reprojected_point)
+    error = np.linalg.norm(point_2D[1] - reprojected_point[1])
+    return error, reprojected_point
+
+
+def optimize_view(point_3D, point_2D, K, R, t):
+    pass

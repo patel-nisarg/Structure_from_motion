@@ -6,7 +6,6 @@ from scipy.sparse import lil_matrix
 import time
 from scipy.optimize import least_squares
 
-
 BASE_URL = "http://grail.cs.washington.edu/projects/bal/data/ladybug/"
 FILE_NAME = "problem-49-7776-pre.txt.bz2"
 URL = BASE_URL + FILE_NAME
@@ -44,7 +43,10 @@ def read_bal_data(file_name):
 
 
 camera_params, points_3d, camera_indices, point_indices, points_2d = read_bal_data(FILE_NAME)
-
+# data = np.load('optimize_data.npz')
+# camera_params, points_3d, camera_indices, point_indices, points_2d = data['camera_params'], data['points_3d'], \
+#                                                                      data['camera_indices'], data['point_indices'], \
+#                                                                      data['points_2d']
 n_cameras = camera_params.shape[0]
 n_points = points_3d.shape[0]
 
@@ -97,29 +99,31 @@ def fun(params, n_cameras, n_points, camera_indices, point_indices, points_2d):
     points_proj = project(points_3d[point_indices], camera_params[camera_indices])
     return (points_proj - points_2d).ravel()
 
-# def bundle_adjustment_sparsity(n_cameras, n_points, camera_indices, point_indices):
-#     m = camera_indices.size * 2
-#     n = n_cameras * 9 + n_points * 3
-#     A = lil_matrix((m, n), dtype=int)
-#
-#     i = np.arange(camera_indices.size)
-#     for s in range(9):
-#         A[2 * i, camera_indices * 9 + s] = 1
-#         A[2 * i + 1, camera_indices * 9 + s] = 1
-#
-#     for s in range(3):
-#         A[2 * i, n_cameras * 9 + point_indices * 3 + s] = 1
-#         A[2 * i + 1, n_cameras * 9 + point_indices * 3 + s] = 1
-#
-#     return A
-#
-# x0 = np.hstack((camera_params.ravel(), points_3d.ravel()))
-# f0 = fun(x0, n_cameras, n_points, camera_indices, point_indices, points_2d)
-# A = bundle_adjustment_sparsity(n_cameras, n_points, camera_indices, point_indices)
-#
-# t0 = time.time()
-# res = least_squares(fun, x0, jac_sparsity=A, verbose=2, x_scale='jac', ftol=1e-4, method='trf',
-#                     args=(n_cameras, n_points, camera_indices, point_indices, points_2d))
-# t1 = time.time()
-#
-# print("Optimization took {0:.0f} seconds".format(t1 - t0))
+
+def bundle_adjustment_sparsity(n_cameras, n_points, camera_indices, point_indices):
+    m = camera_indices.size * 2
+    n = n_cameras * 9 + n_points * 3
+    A = lil_matrix((m, n), dtype=int)
+
+    i = np.arange(camera_indices.size)
+    for s in range(9):
+        A[2 * i, camera_indices * 9 + s] = 1
+        A[2 * i + 1, camera_indices * 9 + s] = 1
+
+    for s in range(3):
+        A[2 * i, n_cameras * 9 + point_indices * 3 + s] = 1
+        A[2 * i + 1, n_cameras * 9 + point_indices * 3 + s] = 1
+
+    return A
+
+
+x0 = np.hstack((camera_params.ravel(), points_3d.ravel()))
+f0 = fun(x0, n_cameras, n_points, camera_indices, point_indices, points_2d)
+A = bundle_adjustment_sparsity(n_cameras, n_points, camera_indices, point_indices)
+
+t0 = time.time()
+res = least_squares(fun, x0, jac_sparsity=A, verbose=2, x_scale='jac', ftol=1e-4, method='trf',
+                    args=(n_cameras, n_points, camera_indices, point_indices, points_2d))
+t1 = time.time()
+
+print("Optimization took {0:.0f} seconds".format(t1 - t0))

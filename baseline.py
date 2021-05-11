@@ -9,6 +9,7 @@ class Baseline:
     """
     Creates the baseline from two views.
     """
+
     def __init__(self, view1, view2, K):
         """
         K: Camera intrinsic calibration matrix.
@@ -32,22 +33,23 @@ class Baseline:
         self.calc_essential_matrix()
         # Get four camera poses for view2
         self.view1.rotation = np.eye(3)
-        self.view1.position = np.zeros((3, 1))
         C2, R2 = camera_pose_extraction(self.essential_mat)
         # Disambiguate poses
         X_4 = []
         x1, x2 = self.view1.tracked_pts[self.view2.id]
         for i in range(len(R2)):
-            C_2 = np.expand_dims(C2[i], axis=1)
-            X_4.append(linear_triangulation(self.K, self.view1.position, self.view1.rotation,
-                                            C_2, R2[i], x1, x2, inhomogeneous=False))
+            # X_n = baseline_triangulation(self.K, self.view1.position, self.view1.rotation,
+            #                              C2[i], R2[i], x1, x2, inhomogeneous=True)
+            print(f"Pose {i}")
+            X_n = triangulate_points(self.K, self.view1.translation, self.view1.rotation,
+                                     C2[i], R2[i], x1, x2)
+            X_4.append(X_n)
 
-        X, R2 = pose_disambiguation(C2, R2, X_4)
-        self.view2.translation = np.reshape((C2 @ -R2)[0], (3, 1))
-        # self.view2.rotation, _ = cv.Rodrigues(R2)
+        X, self.view2.rotation, self.view2.translation = pose_disambiguation(x2, self.K, C2, R2, X_4)
         wpSet = WorldPointSet()
         wpSet.add_correspondences(X, self.view1, self.view2)
-        store_3Dpoints_to_views(X, self.view1, self.view2)
+        store_3Dpoints_to_views(X, self.view1, self.view2, self.K, store_low_rpr=True)
+        np.savez('points_3d_baseline', point_cloud=wpSet.world_points)
         return wpSet
 
     def calc_fundamental_matrix(self, save=False):
@@ -55,13 +57,14 @@ class Baseline:
         self.fundamental_mat, mask = cv.findFundamentalMat(self.X1, self.X2, method=FM_METHOD)
         self.view1.tracked_pts[self.view2.id] = (self.X1[mask.ravel() == 1], self.X2[mask.ravel() == 1])
         self.view2.tracked_pts[self.view1.id] = (self.X2[mask.ravel() == 1], self.X1[mask.ravel() == 1])
-
         if save:
             np.savez('fundamental_matrix', F=self.fundamental_mat)
 
     def calc_essential_matrix(self, save=False):
         self.essential_mat = self.K.T @ self.fundamental_mat @ self.K
-
+        U, _, V = np.linalg.svd(self.essential_mat)
+        self.essential_mat = U @ np.array([[1, 0, 0], [0, 1, 0], [0, 0, 0]]) @ V
+        self.essential_mat = self.essential_mat / np.linalg.norm(self.essential_mat)
         if save:
             np.savez('essential_matrix', E=self.essential_mat)
 
@@ -77,7 +80,7 @@ class Baseline:
         NN_RATIO_THRESHOLD = 0.8
 
         if matcher_type == "flann":
-            FLANN_INDEX_KDTREE = 0
+            FLANN_INDEX_KDTREE = 1
             index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
             search_params = dict(checks=50)
             matcher = cv.FlannBasedMatcher(index_params, search_params)
@@ -107,7 +110,7 @@ class Baseline:
 
         logging.info(f"{len(good_matches)} good matches found from {len(matches)} matches.")
 
-        self.X1 = np.array(X1, dtype=np.float32)
-        self.X2 = np.array(X2, dtype=np.float32)
+        self.X1 = np.array(X1, dtype=np.float64)
+        self.X2 = np.array(X2, dtype=np.float64)
 
         return None

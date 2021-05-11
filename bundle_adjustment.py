@@ -53,7 +53,6 @@ def project(points, camera_params):
 def fun(params, n_cameras, n_points, camera_indices, point_indices, points_2d):
     # returns difference between projected 2D points and actual 2D points
     # different procedure here for baseline views
-
     camera_params = params[:n_cameras * 9].reshape((n_cameras, 9))
     points_3d = params[n_cameras * 9:].reshape((n_points, 3))
     points_proj = project(points_3d[point_indices], camera_params[camera_indices])
@@ -73,7 +72,6 @@ def bundle_adjustment_sparsity(n_cameras, n_points, camera_indices, point_indice
     for s in range(3):
         A[2 * i, n_cameras * 9 + point_indices * 3 + s] = 1
         A[2 * i + 1, n_cameras * 9 + point_indices * 3 + s] = 1
-
     return A
 
 
@@ -85,9 +83,9 @@ class BundleAdjustment:
         self.point_indices = []
         self.camera_indices = []
         self.view_idx = {}
-        self.camera_params = np.array([])
+        self.camera_params = []
         self.focal_len = (K[0, 0] + K[1, 1]) / 2
-        self.dist = dist[:2]
+        self.dist = dist[0][:2]
         self.correspondences = wpSet.correspondences
         self.n_cameras = None
         self.n_points = None
@@ -96,33 +94,39 @@ class BundleAdjustment:
         """
         Takes in a list of views and converts them to indices. For each 2D
         point, a view index is assigned."""
-
         for view in self.completed_views:
             if view.id not in self.view_idx:
-                if len(self.view_idx) == 0:
-                    self.view_idx[view.id] = 0
-                self.view_idx[view.id] = min(self.view_idx) + 1
-            rot_vec, _ = cv.Rodrigues(view.rotation)
-            np.append(self.camera_params, [view.rotation, view.translation, self.focal_len, self.dist])
+                self.view_idx[view.id] = len(self.view_idx)
 
-        for _, row in self.correspondences.iterrows():
+            rot_vec, _ = cv.Rodrigues(view.rotation)
+            params = np.concatenate((rot_vec, view.translation.reshape((1, 3)), self.focal_len, self.dist), axis=None).tolist()
+            # print(view.name, params)
+            self.camera_params.append(params)
+
+        self.camera_params = np.array(self.camera_params)
+        for i, row in self.correspondences.iterrows():
             self.points_2d.append(row['FeatureIndex'][0])
             self.camera_indices.append(self.view_idx[row['ViewId'][0]])
 
             self.points_2d.append(row['FeatureIndex'][1])
             self.camera_indices.append(self.view_idx[row['ViewId'][1]])
 
-            self.point_indices.append(row['PointIndex'])
-            self.point_indices.append(row['PointIndex'])
+            self.point_indices.append(i)
+            self.point_indices.append(i)
 
         self.camera_indices = np.array(self.camera_indices)
+        self.point_indices = np.array(self.point_indices)
+        self.points_2d = np.array(self.points_2d)
         self.points_3d = np.array(self.points_3d)
         self.n_points = self.points_3d.shape[0]
         self.n_cameras = self.camera_params.shape[0]
         logging.info(f"Number of views processed: {self.n_cameras}.")
         logging.info(f"Number of 3D points processed: {self.n_points}.")
+        np.savez('optimize_data', camera_params=self.camera_params, points_3d=self.points_3d,
+                 camera_indices=self.camera_indices, point_indices=self.point_indices, points_2d=self.points_2d)
 
     def optimize(self):
+        self.view2idx()
         x0 = np.hstack((self.camera_params.ravel(), self.points_3d.ravel()))
         f0 = fun(x0, self.n_cameras, self.n_points, self.camera_indices, self.point_indices, self.points_2d)
         A = bundle_adjustment_sparsity(self.n_cameras, self.n_points, self.camera_indices, self.point_indices)

@@ -9,14 +9,14 @@ class WorldPointSet:
     world_points property contains the points that will be visualized.
     """
 
-    def __init__(self, world_points=np.array([], dtype=np.float32)):
+    def __init__(self, world_points=np.empty((0, 3), dtype=np.float64)):
         self.world_points = world_points
         self.view_ids = None
         self.count = 0
         self.correspondences = pd.DataFrame(columns=['PointIndex', 'ViewId', 'FeatureIndex'])
 
     def add_world_points(self, points):
-        np.append(self.world_points, points)
+        self.world_points = np.append(self.world_points, points, axis=0)
 
     def remove_world_points(self, point_indices):
         pass
@@ -28,26 +28,26 @@ class WorldPointSet:
         if self.correspondences.empty:
             logging.info("Found empty world points set. Appending 3D coordinates from baseline...")
             for i, world_coord in enumerate(world_coords):
-                if world_coord in self.world_points:
-                    continue
                 self.correspondences = self.correspondences.append({'PointIndex': i,
                                                                     'ViewId': ViewIds,
                                                                     'FeatureIndex': [feature_indices[0][i],
                                                                                      feature_indices[1][i]]},
                                                                    ignore_index=True)
-                self.add_world_points(points=world_coord)
+                self.add_world_points(points=world_coord.reshape((1, 3)))
             logging.info(f"Appended {len(world_coords)} 3D points to world coordinates set.")
         else:
             logging.info("Appending 3D coordinates to existing world points set...")
+            set_length = len(self.correspondences)
             for i, world_coord in enumerate(world_coords):
                 if world_coord in self.world_points:
+                    # print("WP already in WP Set.")
                     continue
-                self.correspondences = self.correspondences.append({'PointIndex': len(self.correspondences) + (i + 1),
+                self.correspondences = self.correspondences.append({'PointIndex': set_length + i,
                                                                     'ViewId': ViewIds,
                                                                     'FeatureIndex': [feature_indices[0][i],
                                                                                      feature_indices[1][i]]},
                                                                    ignore_index=True)
-                self.add_world_points(points=world_coord)
+                self.add_world_points(points=world_coord.reshape((1, 3)))
             logging.info(f"Appended {len(world_coords)} 3D points to world coordinates set.")
 
     def remove_correspondences(self, correspondences):
