@@ -1,4 +1,4 @@
-# SFM_from_CAD_Model
+# SFM from CAD Model
  3D reconstruction of a 3D printed CAD model.
 
 main.py
