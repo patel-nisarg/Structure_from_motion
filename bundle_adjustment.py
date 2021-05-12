@@ -40,6 +40,7 @@ def rotate_points(points, rot_vecs):
 def project(points, camera_params):
     points_proj = rotate_points(points, camera_params[:, :3])
     points_proj += camera_params[:, 3:6]
+    # print(points_proj)
     points_proj = -points_proj[:, :2] / points_proj[:, 2, np.newaxis]
     f = camera_params[:, 6]
     k1 = camera_params[:, 7]
@@ -131,9 +132,11 @@ class BundleAdjustment:
         f0 = fun(x0, self.n_cameras, self.n_points, self.camera_indices, self.point_indices, self.points_2d)
         A = bundle_adjustment_sparsity(self.n_cameras, self.n_points, self.camera_indices, self.point_indices)
         t0 = time.time()
-        res = least_squares(fun, x0, jac_sparsity=A, verbose=2, x_scale='jac', ftol=1e-4, method='trf',
+        res = least_squares(fun, x0, jac_sparsity=A, verbose=2, x_scale='jac', ftol=1e-5, method='trf',
                             args=(self.n_cameras, self.n_points, self.camera_indices, self.point_indices,
                                   self.points_2d))
         t1 = time.time()
         logging.info(f"Optimized {self.n_points} in {t1-t0} seconds.")
+        print(res)
+        logging.info(res)
         return res['x']

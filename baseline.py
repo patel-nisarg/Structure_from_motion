@@ -46,9 +46,9 @@ class Baseline:
             X_4.append(X_n)
 
         X, self.view2.rotation, self.view2.translation = pose_disambiguation(x2, self.K, C2, R2, X_4)
-        wpSet = WorldPointSet()
+        wpSet = WorldPointSet(add_redundant_views=False)
+        X = store_3Dpoints_to_views(X, self.view1, self.view2, self.K)
         wpSet.add_correspondences(X, self.view1, self.view2)
-        store_3Dpoints_to_views(X, self.view1, self.view2, self.K, store_low_rpr=True)
         np.savez('points_3d_baseline', point_cloud=wpSet.world_points)
         return wpSet
 

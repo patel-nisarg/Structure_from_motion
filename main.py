@@ -25,8 +25,8 @@ def run():
     # establish baseline -> get F matrix, E matrix, primary poses and 3D points from first two views
     wpSet = baseline()
     points_3d = sfm_loop(image_paths, features_dir, baseline, wpSet, K, dist)
-    print(wpSet.world_points.shape)
-    np.savez('points_3d', point_cloud=points_3d)
+    print(points_3d.shape)
+    np.savez('C:\\Users\\Nisarg\\Desktop\\points_3d', point_cloud=points_3d)
     # Visualize point cloud
     # visualize_pt_cloud(world_coords)
 
@@ -64,10 +64,10 @@ def sfm_loop(sfm_images, features_dir, baseline, wpSet, K, dist):
                 x1, x2 = remove_outliers(view, view_n)
                 X = triangulate_points(K, t1=view.translation, R1=view.rotation,
                                        t2=view_n.translation, R2=view_n.rotation, x1=x1, x2=x2,
-                                       print_error=True)
+                                       print_error=False)
 
                 # add correspondences to world coordinates
-                store_3Dpoints_to_views(X, view_n, view, K, store_low_rpr=True)
+                X = store_3Dpoints_to_views(X, view_n, view, K)
                 wpSet.add_correspondences(X, view, view_n)  # change WorldPoints.py to skip existing 3D pts
 
     for image in sfm_images[2:]:
@@ -85,7 +85,7 @@ def sfm_loop(sfm_images, features_dir, baseline, wpSet, K, dist):
     # Perform bundle adjustment on new view and existing views -> Update 3D points dictionary
     ba = BundleAdjustment(wpSet, K, dist, completed_views)
     points_3d = ba.optimize()
-    return points_3d
+    return points_3d.reshape((int(len(points_3d)/3.0), 3))
 
 
 if __name__ == "__main__":

@@ -32,7 +32,7 @@ class ImageView:
         self.position = np.zeros((3, 1))
         self.keypoints = None
         self.descriptors = None
-        self.world_points = {}  # (keypoint):3D point pair {():[]}
+        self.world_points = np.empty((1, 5))  #
         self.tracked_pts = {}  #
         self.translation = np.zeros((3, 1))
 
@@ -95,4 +95,3 @@ class ImageView:
 
     def get_3D_correspondences(self):
         return self.world_points.items()
-
