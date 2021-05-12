@@ -38,7 +38,7 @@ view.py
 - Contains class for View object
 - Features for the image are extracted here (unless features are for baseline views which are extracted in baseline.py)
 - Rotation matrix stored in view as (3 x 3). During BA, this is converted to Euler angles vector (3 x 1) using Rodrigues.
-- WorldPoints are stored in each View like so: {(view1_kp1):3d_point,..., (view1_kp2):3d_point}
+- WorldPoints are stored in each View like so: np.array(kp_x, kp_x, point3d_x, point3d_y, point3d_z) -> for an N x 5 array, where N is # of 3D points.
 - TrackedPoints are matched points between two images. They are stored for example as view1.tracked_pts = {'view2_id':(view1 kps, view2kps), 'view3_id':(view1kps, view3kps), ..., 'viewn_id':(view1kps, viewnkps)}
    - Each View has an ID associated to it in the form of a hashed string. TrackedPoints takes another View's ID as a key and assigns a tuple containing keypoint matches between the two views.
    - These keypoint matches are used for computing pose via PnP and later filtered using a fundamental matrix between the two views prior to triangulation.
@@ -69,7 +69,7 @@ utils.py
   - Computes pose for a new view using previously constructed views
   - Feature matches new view with completed views
   - Checks if the matched 2D point from the completed view (view_n) is in the world_points dictionary for that view
-  - If the point is in the view's world_points dictionary, get the 3D point from that dictionary and store it in local 3D points array. Also store corresponding 2D point in 2D points array. !! I NEED TO CHECK THIS SHIT FOR FLOAT PT ERRORS!!
+  - If the point is in the view's world_points, get the 3D point from that array and store it in local 3D points array. Also store corresponding 2D point in 2D points array. 
   - Calculates pose using cv.solvePnPRansac and the points_3d/points_2d
   
 - store_3Dpoints_to_views
