@@ -172,10 +172,10 @@ def pose_disambiguation(x2, K, C2, R2, X_n):
             error, reprojected_pt = calculate_reprojection_error(point_3d, x2[i], K, R2[j],
                                                                  C2[j])
             # if error > 50.0:
-            #     print(x2[i], reprojected_pt)
+            # print(x2[i], reprojected_pt)
             X_set_error.append(error)
         reprojection_error.append(np.mean(X_set_error))
-    # print(reprojection_error)
+    print(reprojection_error)
     X = X_n[np.argmin(reprojection_error)]
     R = R2[np.argmin(reprojection_error)]
     C = C2[np.argmin(reprojection_error)]
@@ -245,10 +245,11 @@ def triangulate_points(K, t1, R1, t2, R2, x1, x2, print_error=False):
     return X
 
 
-def compute_pose(view, completed_views, K, dist):
+def compute_pose(view, completed_views, K, dist, img_matches):
     """
     Compute pose of current view from completed_views using Linear PnP.
     Also updates the tracked points (view.tracked_pts['completed_view']) between current view and completed views.
+    :param img_matches: Dictionary of image match pairs containing keypoints
     :param view: Current view for which to compute pose.
     :param completed_views: List containing all View Ids that have been 3D reconstructed.
     :param K:
@@ -259,7 +260,12 @@ def compute_pose(view, completed_views, K, dist):
     points_3d = np.empty((0, 3))
 
     for view_n in completed_views:
-        match = feature_match(view, view_n)
+        # match = feature_match(view, view_n)
+        # print(view.name, view_n.name)
+        match = img_matches[(view.name, view_n.name)]
+        view.tracked_pts[view_n.id] = match
+        view_n.tracked_pts[view.id] = img_matches[(view_n.name, view.name)]
+        # print(view_n.world_points[:, :2].shape)
         if match is not None:
             logging.info(f"Sufficient matches found between {view.name} and {view_n.name}.")
             # for i, point in enumerate(match[1]):
@@ -268,16 +274,17 @@ def compute_pose(view, completed_views, K, dist):
             #         point_3d = view_n.world_points[point]
             #         points_2d.append(match[0][i])
             #         points_3d = np.append(points_3d, point_3d)
-            for i, point in enumerate(match[1]):
-                # find existing 2D/3D point correspondence in view_n that is in
-                # the feature match between view and view_n
-                index = np.argwhere(np.isclose(view_n.world_points[:, :2], point))
-                if index.size != 0:
-                    point_3d = view_n.world_points[index[0][0], 2:]
-                    points_3d = np.append(points_3d, [point_3d], axis=0)
+        for i, point in enumerate(match[1]):
+            # find existing 2D/3D point correspondence in view_n that is in
+            # the feature match between view and view_n
+            index = np.argwhere(np.isclose(view_n.world_points[:, :2], point))
+            # print(index)
+            if index.size != 0:
+                point_3d = view_n.world_points[index[0][0], 2:]
+                points_3d = np.append(points_3d, [point_3d], axis=0)
 
-                    point_2d = match[0][i]  # point in View (NOT View_n)
-                    points_2d = np.append(points_2d, [point_2d], axis=0)
+                point_2d = match[0][i]  # point in View (NOT View_n)
+                points_2d = np.append(points_2d, [point_2d], axis=0)
         logging.info(f"Found {len(points_2d)} 3D points in {view_n.name} matching {view.name}.")
 
     print(points_3d.shape, points_2d.shape)
@@ -315,29 +322,29 @@ def store_3Dpoints_to_views(X_initial, view1, view2, K, error_threshold=40.0):
     view1_points = np.array(view1.tracked_pts[view2.id][0])  # points in view1 that have a triangulated 3D point X
     view2_points = np.array(view2.tracked_pts[view1.id][0])
     rm_indices = []
+    X_fin = []
     for i, point_3d in enumerate(X_initial):
         error1, reproj_pt1 = calculate_reprojection_error(point_3d, view1_points[i][:, np.newaxis], K, view1.rotation,
                                                           view1.translation)
         error2, reproj_pt2 = calculate_reprojection_error(point_3d, view2_points[i][:, np.newaxis], K, view2.rotation,
                                                           view2.translation)
         if error1 < error_threshold and error2 < error_threshold:
-            # view1.world_points[tuple(view1_points[i])] = X[i].reshape((1, 3))
-            # view2.world_points[tuple(view2_points[i])] = X[i].reshape((1, 3))
-
-            # append to world points of views of reprojection error is lower than 40.0
+            # append to world points of views of reprojection error is lower than error_threshold
             wp1 = np.concatenate((view1_points[i], point_3d.reshape(1, 3)), axis=None)
             view1.world_points = np.append(view1.world_points, [wp1], axis=0)
             wp2 = np.concatenate((view2_points[i], point_3d.reshape(1, 3)), axis=None)
             view2.world_points = np.append(view2.world_points, [wp2], axis=0)
             rm_indices.append(i)
 
-    # remove 2D points from views that have higher reprojection error than threshold
+            # remove 2D points from views that have higher reprojection error than threshold
+            # print(view1.tracked_pts[view2.id])
     view1.tracked_pts[view2.id] = (np.delete(view1.tracked_pts[view2.id][0], rm_indices, 0),
                                    np.delete(view1.tracked_pts[view2.id][1], rm_indices, 0))
     view2.tracked_pts[view1.id] = (np.delete(view2.tracked_pts[view1.id][0], rm_indices, 0),
                                    np.delete(view2.tracked_pts[view1.id][1], rm_indices, 0))
-    # remove 3D points from points set that have a higher reprojection error than threshold
+        # remove 3D points from points set that have a higher reprojection error than threshold
     X_fin = np.delete(X_initial, rm_indices, axis=0)
+
     return X_fin
 
 
@@ -371,5 +378,14 @@ def calculate_reprojection_error(point_3D, point_2D, K, R, t):
     return error, reprojected_point
 
 
-def optimize_view(point_3D, point_2D, K, R, t):
-    pass
+def keypoints_to_dict(keypoints):
+    img_matches = {}
+    for match in keypoints:
+        key = (match[2], match[3])
+        val = [match[0], match[1]]
+        img_matches[key] = val
+        key = (match[3], match[2])
+        val = [match[1], match[0]]
+        img_matches[key] = val
+    return img_matches
+

@@ -1,10 +1,5 @@
 import numpy as np
-import pyvista as pv
-from pyvista import examples
+import open3d as o3d
 
-# REQUIRES PYTHON 3.7/8
-points = np.load('points_3d.npz')['point_cloud']
+pcd = o3d.geometry.PointCloud()
 
-point_cloud = pv.PolyData(points)
-print(point_cloud)
-point_cloud.plot(eye_dome_lighting=True)

@@ -129,6 +129,7 @@ class BundleAdjustment:
     def optimize(self):
         self.view2idx()
         x0 = np.hstack((self.camera_params.ravel(), self.points_3d.ravel()))
+        print(len(self.camera_params.ravel()), len(self.points_3d.ravel()))
         f0 = fun(x0, self.n_cameras, self.n_points, self.camera_indices, self.point_indices, self.points_2d)
         A = bundle_adjustment_sparsity(self.n_cameras, self.n_points, self.camera_indices, self.point_indices)
         t0 = time.time()
@@ -138,5 +139,5 @@ class BundleAdjustment:
         t1 = time.time()
         logging.info(f"Optimized {self.n_points} in {t1-t0} seconds.")
         print(res)
-        logging.info(res)
-        return res['x']
+        print(len(res['x']))
+        return res['x'][len(self.camera_params.ravel()):]

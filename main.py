@@ -21,7 +21,10 @@ def run():
     view1 = ImageView(image_paths[0], features_path=features_dir)
     view2 = ImageView(image_paths[1], features_path=features_dir)
     # Initialize baseline object with its point correspondences.
-    baseline = Baseline(view1, view2, K)
+    global img_matches
+    keypoints = np.load('features\\feature_matches_filtered.npz', allow_pickle=True)['filtered_matches']
+    img_matches = keypoints_to_dict(keypoints)
+    baseline = Baseline(view1, view2, K, keypoints[0])
     # establish baseline -> get F matrix, E matrix, primary poses and 3D points from first two views
     wpSet = baseline()
     points_3d = sfm_loop(image_paths, features_dir, baseline, wpSet, K, dist)
@@ -57,15 +60,16 @@ def sfm_loop(sfm_images, features_dir, baseline, wpSet, K, dist):
         :param completed_views: Views from which 3D points have been triangulated.
         :param view: View with which to update world 3D coordinates.
         """
-        view.rotation, view.translation = compute_pose(view, completed_views, K, dist)
+        view.rotation, view.translation = compute_pose(view, completed_views, K, dist, img_matches)
         for view_n in completed_views:
             if view_n.id in view.tracked_pts:
                 # Before triangulating, remove outliers using F matrix between x1 and x2.
-                x1, x2 = remove_outliers(view, view_n)
+                # x1, x2 = remove_outliers(view, view_n)
+                x1, x2 = view.tracked_pts[view_n.id]
                 X = triangulate_points(K, t1=view.translation, R1=view.rotation,
                                        t2=view_n.translation, R2=view_n.rotation, x1=x1, x2=x2,
                                        print_error=False)
-
+                # print('3d points', X)
                 # add correspondences to world coordinates
                 X = store_3Dpoints_to_views(X, view_n, view, K)
                 wpSet.add_correspondences(X, view, view_n)  # change WorldPoints.py to skip existing 3D pts
@@ -73,9 +77,9 @@ def sfm_loop(sfm_images, features_dir, baseline, wpSet, K, dist):
     for image in sfm_images[2:]:
         # extract features of a view
         view = ImageView(image, features_dir)
-        view.read_features()
-        if view.descriptors is None:
-            view.extract_features(write_to_file=True)
+        # view.read_features()
+        # if view.descriptors is None:
+        #     view.extract_features(write_to_file=True)
 
         if view not in completed_views:
             update_3d_points(view, completed_views, K, dist)
@@ -85,7 +89,7 @@ def sfm_loop(sfm_images, features_dir, baseline, wpSet, K, dist):
     # Perform bundle adjustment on new view and existing views -> Update 3D points dictionary
     ba = BundleAdjustment(wpSet, K, dist, completed_views)
     points_3d = ba.optimize()
-    return points_3d.reshape((int(len(points_3d)/3.0), 3))
+    return points_3d.reshape((int(len(points_3d) / 3.0), 3))
 
 
 if __name__ == "__main__":

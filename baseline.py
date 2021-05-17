@@ -10,14 +10,14 @@ class Baseline:
     Creates the baseline from two views.
     """
 
-    def __init__(self, view1, view2, K):
+    def __init__(self, view1, view2, K, keypoints):
         """
         K: Camera intrinsic calibration matrix.
         view1: View of first image from which to get baseline. By default R and t for this view will be I_3x3 and 0.
         view2: View of second image from which to extract baseline information.
         """
-        self.X2 = None
-        self.X1 = None
+        self.X2 = keypoints[0]
+        self.X1 = keypoints[1]
         self.K = K
         self.view1 = view1
         self.view2 = view2
@@ -38,15 +38,14 @@ class Baseline:
         X_4 = []
         x1, x2 = self.view1.tracked_pts[self.view2.id]
         for i in range(len(R2)):
-            # X_n = baseline_triangulation(self.K, self.view1.position, self.view1.rotation,
-            #                              C2[i], R2[i], x1, x2, inhomogeneous=True)
-            print(f"Pose {i}")
+            print(f"Pose {i + 1}")
             X_n = triangulate_points(self.K, self.view1.translation, self.view1.rotation,
                                      C2[i], R2[i], x1, x2)
             X_4.append(X_n)
 
         X, self.view2.rotation, self.view2.translation = pose_disambiguation(x2, self.K, C2, R2, X_4)
         wpSet = WorldPointSet(add_redundant_views=False)
+        print(self.view1.tracked_pts[self.view2.id][0].shape)
         X = store_3Dpoints_to_views(X, self.view1, self.view2, self.K)
         wpSet.add_correspondences(X, self.view1, self.view2)
         np.savez('points_3d_baseline', point_cloud=wpSet.world_points)
@@ -57,6 +56,8 @@ class Baseline:
         self.fundamental_mat, mask = cv.findFundamentalMat(self.X1, self.X2, method=FM_METHOD)
         self.view1.tracked_pts[self.view2.id] = (self.X1[mask.ravel() == 1], self.X2[mask.ravel() == 1])
         self.view2.tracked_pts[self.view1.id] = (self.X2[mask.ravel() == 1], self.X1[mask.ravel() == 1])
+        # self.view1.tracked_pts[self.view2.id] = (self.X1, self.X2)
+        # self.view2.tracked_pts[self.view1.id] = (self.X2, self.X1)
         if save:
             np.savez('fundamental_matrix', F=self.fundamental_mat)
 

@@ -32,7 +32,7 @@ class ImageView:
         self.position = np.zeros((3, 1))
         self.keypoints = None
         self.descriptors = None
-        self.world_points = np.empty((1, 5))  #
+        self.world_points = np.empty((0, 5))  #
         self.tracked_pts = {}  #
         self.translation = np.zeros((3, 1))
 
