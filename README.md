@@ -4,7 +4,7 @@
 main.py
 
 - Loads image paths from a text file of images paths. 
-**- NOTE: NEW main.py FILE USES 'feature_matches_filtered.npz' FOR DNN FILTERED MATCHES!**
+- **NOTE: NEW main.py FILE USES 'feature_matches_filtered_tr.npz' FOR DNN FILTERED MATCHES OF TEMPLE RING!**
 - Initializes camera calibration data
      - For OpenMVG images I posted, calibration data is only K matrix in K.txt
      - No distortion parameters
