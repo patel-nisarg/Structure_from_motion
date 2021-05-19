@@ -9,22 +9,24 @@ from datetime import datetime
 
 
 def run():
-    image_paths = get_paths_from_txt("sfm_image_paths - Copy.txt")  # list of filenames for sfm.
+    image_paths = get_paths_from_txt("temple_ring_img_pths.txt")  # list of filenames for sfm.
     # File names should be in 'image_001.jpg' format
     features_dir = os.path.join(os.getcwd(), "features/")
     # Obtain intrinsic matrix(K) and distortion coefficients for camera
     camera_data = np.load('calibration_data.npz')
     # K, dist = camera_data['calibratoin_matrix'], camera_data['distortion_params']
     K = np.loadtxt('K.txt')
+    K = np.matrix('1520.40 0.00 302.32; 0.00 1525.90 246.87; 0.00 0.00 1.00')
     dist = np.zeros((1, 5))
     # Load first two views. Note, ensure the two desired baseline images are at top of image paths text file.
     view1 = ImageView(image_paths[0], features_path=features_dir)
     view2 = ImageView(image_paths[1], features_path=features_dir)
     # Initialize baseline object with its point correspondences.
     global img_matches
-    keypoints = np.load('features\\feature_matches_filtered.npz', allow_pickle=True)['filtered_matches']
+    keypoints = np.load('features\\feature_matches_filtered_tr.npz', allow_pickle=True)['filtered_matches']
     img_matches = keypoints_to_dict(keypoints)
-    baseline = Baseline(view1, view2, K, keypoints[0])
+    init_pair = img_matches[('20', '23')]
+    baseline = Baseline(view1, view2, K, init_pair)
     # establish baseline -> get F matrix, E matrix, primary poses and 3D points from first two views
     wpSet = baseline()
     points_3d = sfm_loop(image_paths, features_dir, baseline, wpSet, K, dist)
@@ -71,19 +73,22 @@ def sfm_loop(sfm_images, features_dir, baseline, wpSet, K, dist):
                                        print_error=False)
                 # print('3d points', X)
                 # add correspondences to world coordinates
-                X = store_3Dpoints_to_views(X, view_n, view, K)
+                X = store_3Dpoints_to_views(X, view_n, view, K, error_threshold=1.0)
                 wpSet.add_correspondences(X, view, view_n)  # change WorldPoints.py to skip existing 3D pts
 
-    for image in sfm_images[2:]:
+    for i, image in enumerate(sfm_images[2:]):
         # extract features of a view
         view = ImageView(image, features_dir)
         # view.read_features()
         # if view.descriptors is None:
         #     view.extract_features(write_to_file=True)
-
         if view not in completed_views:
             update_3d_points(view, completed_views, K, dist)
         completed_views.append(view)
+        ba = BundleAdjustment(wpSet, K, dist, completed_views)
+        # optimized_poses = ba.optimize()
+        np.savez(f'points\\points3d_{i}', point_cloud=wpSet.world_points)
+
     wpSet.correspondences.to_csv('\point_correspondences.csv')
     np.savetxt("points_3d.csv", wpSet.world_points, delimiter=",")
     # Perform bundle adjustment on new view and existing views -> Update 3D points dictionary

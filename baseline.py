@@ -26,7 +26,7 @@ class Baseline:
 
     def __call__(self, *args, **kwargs):
         # Feature matching two views
-        self.feature_match_baseline()
+        # self.feature_match_baseline()
         # Calculate fundamental matrix
         self.calc_fundamental_matrix()
         # Calculate essential matrix
@@ -46,7 +46,7 @@ class Baseline:
         X, self.view2.rotation, self.view2.translation = pose_disambiguation(x2, self.K, C2, R2, X_4)
         wpSet = WorldPointSet(add_redundant_views=False)
         print(self.view1.tracked_pts[self.view2.id][0].shape)
-        X = store_3Dpoints_to_views(X, self.view1, self.view2, self.K)
+        X = store_3Dpoints_to_views(X, self.view1, self.view2, self.K, error_threshold=1.0)
         wpSet.add_correspondences(X, self.view1, self.view2)
         np.savez('points_3d_baseline', point_cloud=wpSet.world_points)
         return wpSet
@@ -115,3 +115,6 @@ class Baseline:
         self.X2 = np.array(X2, dtype=np.float64)
 
         return None
+
+    def recover_pose(self):
+        pass

@@ -373,8 +373,8 @@ def calculate_reprojection_error(point_3D, point_2D, K, R, t):
     # print(K.shape, R.shape, point_3D.shape, t.shape)
     reprojected_point = K.dot(R.dot(point_3D) + t.reshape((3, 1)))
     reprojected_point = cv.convertPointsFromHomogeneous(reprojected_point.T)[:, 0, :].T
-    # print(point_2D, reprojected_point)
-    error = np.linalg.norm(point_2D[1] - reprojected_point[1])
+    # print((point_2D - reprojected_point)[1])
+    error = np.linalg.norm(point_2D - reprojected_point)
     return error, reprojected_point
 
 
