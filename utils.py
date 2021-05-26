@@ -43,7 +43,7 @@ def feature_match(view1, view2, matcher_type="bf", NUM_NEAREST_NEIGHBOURS=2, hom
     X1 = np.array(X1)
     X2 = np.array(X2)
 
-    if len(good_matches) > 10:
+    if len(good_matches) > 20:
         logging.info(f"{len(good_matches)} good matches found from {len(matches)} matches "
                      f"between {view1.name} and {view2.name}.")
         # return matches between X1 and X2
@@ -215,34 +215,39 @@ def triangulate_points(K, t1, R1, t2, R2, x1, x2, print_error=False):
     :return:
     """
     logging.info("Triangulating 3D points...")
-    K_inv = np.linalg.inv(K)
-    P1 = np.hstack((R1, t1))
-    P2 = np.hstack((R2, t2.reshape((3, 1))))
-    u1 = cv.convertPointsToHomogeneous(x1)
-    u2 = cv.convertPointsToHomogeneous(x2)
-    # P1 = K @ np.hstack((R1, t1))
-    # P2 = K @ np.hstack((R2, t2.reshape((3, 1))))
-    # x1 = x1.T
-    # x2 = x2.T
-    u1_n = np.empty((0, 3))
-    u2_n = np.empty((0, 3))
-    for i in range(len(u1)):
-        u1_n = np.append(u1_n, (K_inv @ u1[i].T).T, axis=0)
-        u2_n = np.append(u2_n, (K_inv @ u2[i].T).T, axis=0)
-    u1_n = cv.convertPointsFromHomogeneous(u1_n)
-    u2_n = cv.convertPointsFromHomogeneous(u2_n)
-    X = cv.triangulatePoints(projMatr1=P1, projMatr2=P2, projPoints1=u1_n, projPoints2=u2_n)
+    # K_inv = np.linalg.inv(K)
+    # P1 = np.hstack((R1, t1))
+    # P2 = np.hstack((R2, t2.reshape((3, 1))))
+    # u1 = cv.convertPointsToHomogeneous(x1)
+    # u2 = cv.convertPointsToHomogeneous(x2)
+    if len(x1) < 8:
+        return None
+    P1 = K @ np.hstack((R1, t1))
+    P2 = K @ np.hstack((R2, t2))
+    x1 = x1.T
+    x2 = x2.T
+    # u1_n = np.empty((0, 3))
+    # u2_n = np.empty((0, 3))
+    # for i in range(len(u1)):
+    #     u1_n = np.append(u1_n, (K_inv @ u1[i].T).T, axis=0)
+    #     u2_n = np.append(u2_n, (K_inv @ u2[i].T).T, axis=0)
+    # u1_n = cv.convertPointsFromHomogeneous(u1_n)
+    # u2_n = cv.convertPointsFromHomogeneous(u2_n)
+    X = cv.triangulatePoints(projMatr1=P1, projMatr2=P2, projPoints1=x1, projPoints2=x2)
     X = cv.convertPointsFromHomogeneous(X.T)
+    error1 = []
+    error2 = []
     if print_error:
-        error1 = []
-        error2 = []
         for i, point_3d in enumerate(X):
-            e1, _ = calculate_reprojection_error(point_3d, u1_n[i], K, R1, t1)
+            e1, _ = calculate_reprojection_error(point_3d, x1.T[i], K, R1, t1)
             error1.append(e1)
-            e2, _ = calculate_reprojection_error(point_3d, u2_n[i], K, R2, t2)
+            e2, _ = calculate_reprojection_error(point_3d, x2.T[i], K, R2, t2)
             error2.append(e2)
         print(np.mean(error1), np.mean(error2))
-    return X
+    if np.mean(error1) < 55 and np.mean(error2) < 55:
+        return X
+    else:
+        return None
 
 
 def compute_pose(view, completed_views, K, dist, img_matches):
@@ -252,53 +257,58 @@ def compute_pose(view, completed_views, K, dist, img_matches):
     :param img_matches: Dictionary of image match pairs containing keypoints
     :param view: Current view for which to compute pose.
     :param completed_views: List containing all View Ids that have been 3D reconstructed.
-    :param K:
-    :param dist:
+    :param K: camera intrinsic matrix
+    :param dist: camera distortion parameters
     :return:
     """
     points_2d = np.empty((0, 2))
     points_3d = np.empty((0, 3))
-
+    pts_found = 0
     for view_n in completed_views:
-        # match = feature_match(view, view_n)
+        match = feature_match(view, view_n)
         # print(view.name, view_n.name)
-        match = img_matches[(view.name, view_n.name)]
-        view.tracked_pts[view_n.id] = match
-        view_n.tracked_pts[view.id] = img_matches[(view_n.name, view.name)]
+        # match = img_matches[(view.name, view_n.name)]
+        # view.tracked_pts[view_n.id] = match
+        # view_n.tracked_pts[view.id] = img_matches[(view_n.name, view.name)]
         # print(view_n.world_points[:, :2].shape)
         if match is not None:
-            logging.info(f"Sufficient matches found between {view.name} and {view_n.name}.")
-            # for i, point in enumerate(match[1]):
-            #     point = tuple(point.tolist())
-            #     if point in view_n.world_points:
-            #         point_3d = view_n.world_points[point]
-            #         points_2d.append(match[0][i])
-            #         points_3d = np.append(points_3d, point_3d)
-        for i, point in enumerate(match[1]):
-            # find existing 2D/3D point correspondence in view_n that is in
-            # the feature match between view and view_n
-            index = np.argwhere(np.isclose(view_n.world_points[:, :2], point))
-            # print(index)
-            if index.size != 0:
-                point_3d = view_n.world_points[index[0][0], 2:]
-                points_3d = np.append(points_3d, [point_3d], axis=0)
+            logging.info(f"{len(match[1])} matches found between {view.name} and {view_n.name}.")
+            #     for i, point in enumerate(match[1]):
+            #         point = tuple(point.tolist())
+            #         if point in view_n.world_points:
+            #             point_3d = view_n.world_points[point]
+            #             points_2d.append(match[0][i])
+            #             points_3d = np.append(points_3d, point_3d)
+            for i, point in enumerate(match[1]):
+                # find existing 2D/3D point correspondence in view_n that is in
+                # the feature match between view and view_n
+                index = np.argwhere(np.isclose(view_n.world_points[:, :2], point))
+                #print(index)
+                if index.size != 0:
+                    pts_found += 1
+                    point_3d = view_n.world_points[index[0][0], 2:]
+                    points_3d = np.append(points_3d, [point_3d], axis=0)
 
-                point_2d = match[0][i]  # point in View (NOT View_n)
-                points_2d = np.append(points_2d, [point_2d], axis=0)
-        logging.info(f"Found {len(points_2d)} 3D points in {view_n.name} matching {view.name}.")
+                    point_2d = match[0][i]  # point in View (NOT View_n)
+                    points_2d = np.append(points_2d, [point_2d], axis=0)
+        print(f"Found {pts_found} 3D points in {view_n.name} matching {view.name}.")
+        logging.info(f"Found {pts_found} 3D points in {view_n.name} matching {view.name}.")
 
     print(points_3d.shape, points_2d.shape)
 
     reprojection_Error = 8.0
-    _, rotation, translation, _ = cv.solvePnPRansac(points_3d, points_2d, K, None, confidence=0.99,
-                                                    reprojectionError=reprojection_Error, flags=cv.SOLVEPNP_EPNP)
-    # PnP spits out a Rotation vector. Convert to Rotation matrix and check validity.
-    rotation, _ = cv.Rodrigues(rotation)
-
-    if check_determinant(rotation):
-        rotation = -rotation
-    logging.info(f"Pose for {view.name} calculated.")
-    return rotation, translation
+    if len(points_3d) > 12:
+        _, rotation, translation, _ = cv.solvePnPRansac(points_3d, points_2d, K, None, confidence=0.99,
+                                                        reprojectionError=reprojection_Error, flags=cv.SOLVEPNP_EPNP)
+        # PnP spits out a Rotation vector. Convert to Rotation matrix and check validity.
+        rotation, _ = cv.Rodrigues(rotation)
+        #
+        # if check_determinant(rotation):
+        #     rotation = -rotation
+        logging.info(f"Pose for {view.name} calculated.")
+        return rotation, translation
+    else:
+        return None, None
 
 
 def get_paths_from_txt(filename):
@@ -322,7 +332,6 @@ def store_3Dpoints_to_views(X_initial, view1, view2, K, error_threshold=40.0):
     view1_points = np.array(view1.tracked_pts[view2.id][0])  # points in view1 that have a triangulated 3D point X
     view2_points = np.array(view2.tracked_pts[view1.id][0])
     rm_indices = []
-    X_fin = []
     for i, point_3d in enumerate(X_initial):
         error1, reproj_pt1 = calculate_reprojection_error(point_3d, view1_points[i][:, np.newaxis], K, view1.rotation,
                                                           view1.translation)
@@ -334,15 +343,15 @@ def store_3Dpoints_to_views(X_initial, view1, view2, K, error_threshold=40.0):
             view1.world_points = np.append(view1.world_points, [wp1], axis=0)
             wp2 = np.concatenate((view2_points[i], point_3d.reshape(1, 3)), axis=None)
             view2.world_points = np.append(view2.world_points, [wp2], axis=0)
+        else:
             rm_indices.append(i)
 
-            # remove 2D points from views that have higher reprojection error than threshold
-            # print(view1.tracked_pts[view2.id])
+    # remove 2D points from views that have higher reprojection error than threshold
     view1.tracked_pts[view2.id] = (np.delete(view1.tracked_pts[view2.id][0], rm_indices, 0),
                                    np.delete(view1.tracked_pts[view2.id][1], rm_indices, 0))
     view2.tracked_pts[view1.id] = (np.delete(view2.tracked_pts[view1.id][0], rm_indices, 0),
                                    np.delete(view2.tracked_pts[view1.id][1], rm_indices, 0))
-        # remove 3D points from points set that have a higher reprojection error than threshold
+    # remove 3D points from points set that have a higher reprojection error than threshold
     X_fin = np.delete(X_initial, rm_indices, axis=0)
 
     return X_fin
@@ -359,9 +368,10 @@ def remove_outliers(view1, view2):
     X1, X2 = view1.tracked_pts[view2.id]
     FM_METHOD = cv.FM_RANSAC
 
-    fundamental_mat, mask = cv.findFundamentalMat(X1, X2, method=FM_METHOD)
-    view1.tracked_pts[view2.id] = (X1[mask.ravel() == 1], X2[mask.ravel() == 1])
-    view2.tracked_pts[view1.id] = (X2[mask.ravel() == 1], X1[mask.ravel() == 1])
+    fundamental_mat, mask = cv.findFundamentalMat(X1, X2, method=FM_METHOD, confidence=0.999, ransacReprojThreshold=8)
+    if mask is not None:
+        view1.tracked_pts[view2.id] = (X1[mask.ravel() == 1], X2[mask.ravel() == 1])
+        view2.tracked_pts[view1.id] = (X2[mask.ravel() == 1], X1[mask.ravel() == 1])
 
     return view1.tracked_pts[view2.id][0], view2.tracked_pts[view1.id][0]
 
@@ -378,14 +388,22 @@ def calculate_reprojection_error(point_3D, point_2D, K, R, t):
     return error, reprojected_point
 
 
-def keypoints_to_dict(keypoints):
+def keypoints_to_dict(keypoints, filtered=True):
     img_matches = {}
-    for match in keypoints:
-        key = (match[2], match[3])
-        val = [match[0], match[1]]
-        img_matches[key] = val
-        key = (match[3], match[2])
-        val = [match[1], match[0]]
-        img_matches[key] = val
+    if filtered:
+        for match in keypoints:
+            key = (match[2], match[3])
+            val = [match[0], match[1]]
+            img_matches[key] = val
+            key = (match[3], match[2])
+            val = [match[1], match[0]]
+            img_matches[key] = val
+    else:
+        for match in keypoints:
+            key = (match[4], match[5])
+            val = [match[0], match[1]]
+            img_matches[key] = val
+            key = (match[5], match[4])
+            val = [match[1], match[0]]
+            img_matches[key] = val
     return img_matches
-

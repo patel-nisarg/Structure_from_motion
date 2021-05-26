@@ -1,6 +1,7 @@
 import logging
 import os
 import hashlib
+from utils import calculate_reprojection_error
 
 import cv2 as cv
 import numpy as np
@@ -32,7 +33,7 @@ class ImageView:
         self.position = np.zeros((3, 1))
         self.keypoints = None
         self.descriptors = None
-        self.world_points = np.empty((0, 5))  #
+        self.world_points = np.empty((0, 5))  # (N * [x, y, X, Y, Z]). [x,y] are 2D pts and [X, Y, Z] are 3d pts.
         self.tracked_pts = {}  #
         self.translation = np.zeros((3, 1))
 
@@ -95,3 +96,28 @@ class ImageView:
 
     def get_3D_correspondences(self):
         return self.world_points.items()
+
+    def reproject_view(self, K, print_error=False):
+        tot_error = []
+        for point in self.world_points:
+            point_2d = point[:2]
+            point_3d = point[2:]
+            error, _ = calculate_reprojection_error(point_3d, point_2d, K, self.rotation, self.translation)
+            tot_error.append(error)
+        if print_error:
+            print(f"Reprojection error for image{self.name} is {np.mean(tot_error)}")
+
+    def update_world_points(self, wpSet):
+        """
+        Updates View with 3D points from world points set. Performed after bundle adjustment returns 3D points and poses
+        :param view:
+        :param wpSet:
+        :return:
+        """
+        self.world_points = np.empty((0, 5))
+        for i, row in wpSet.correspondences.iterrows():
+            Ids = row['ViewId']
+            if self.id in Ids:
+                point_2D = row['FeatureIndex'][Ids.index(self.id)]
+                point_3D = wpSet.world_points[i]
+                self.world_points = np.append(self.world_points, [np.hstack((point_2D, point_3D))], axis=0)
