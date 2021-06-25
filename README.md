@@ -60,9 +60,9 @@ The following command runs the entire process and produces a point cloud visuali
 
 ### Samples
 
-Images for a fountain are provided in the /images/fountain directory. These images produce the following point cloud.
+Images for a fountain are provided in the /images/datasets/fountain directory. These images produce the following point cloud.
 
-![ptcloud_fountain](project-image-url)
+![ptcloud_fountain](https://github.com/patel-nisarg/Structure_from_motion/blob/main/images/samples/fountain_pt_cloud2.PNG)
 
 The [temple ring dataset](https://vision.middlebury.edu/mview/data/) can also be used and produces the following point cloud. 
 
