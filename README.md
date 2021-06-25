@@ -49,7 +49,7 @@ See requirements.txt
 
 The following command runs the entire process and produces a point cloud visualization of images contained in "sfm_image_paths.txt" for a calibration matrix "K.txt". You can use these text files in the repo to get an idea of how to structure them. Using the camera_calibration will automatically structure the calibration matrix "K" to required dimensions.
 
-```python
+```powershell
 (venv) C:\SFM>python main.py -i "sfm_image_paths.txt" -K "K.txt"
 ```
 
