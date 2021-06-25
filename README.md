@@ -14,7 +14,7 @@ This project covers the [structure from motion](https://en.wikipedia.org/wiki/St
   - [How To Use](#how-to-use)
     - [Requirements](#requirements)
     - [CLI Example](#cli-example)
-    - [Samples](#samples)
+  - [Samples](#samples)
   - [References](#references)
   - [License](#license)
   - [Author Info](#author-info)
@@ -58,7 +58,7 @@ The following command runs the entire process and produces a point cloud visuali
 
 [Back To The Top](#read-me-template)
 
-### Samples
+## Samples
 
 Images for a fountain are provided in the /images/datasets/fountain directory. These images produce the following point cloud.
 
