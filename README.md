@@ -1,6 +1,6 @@
 # Structure From Motion
 
-![Project Image]([project-image-url](https://raw.githubusercontent.com/patel-nisarg/Structure_from_motion/main/images/samples/fountain_pt_cloud_compare.PNG))
+![Project Image](https://raw.githubusercontent.com/patel-nisarg/Structure_from_motion/main/images/samples/fountain_pt_cloud_compare.PNG)
 
 This project covers the [structure from motion](https://en.wikipedia.org/wiki/Structure_from_motion) (SFM) technique for estimating three-dimensional structure from a sequence of two-dimensional images. SFM photogrammetry provides a non-invasive low-cost method for 3D reconstruction.
 
