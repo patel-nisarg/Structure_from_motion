@@ -263,9 +263,10 @@ def compute_pose(view, completed_views, K, dist, img_matches):
     """
     points_2d = np.empty((0, 2))
     points_3d = np.empty((0, 3))
-    pts_found = 0
+
     for view_n in completed_views:
         match = feature_match(view, view_n)
+        pts_found = 0
         # print(view.name, view_n.name)
         # match = img_matches[(view.name, view_n.name)]
         # view.tracked_pts[view_n.id] = match
@@ -283,7 +284,7 @@ def compute_pose(view, completed_views, K, dist, img_matches):
                 # find existing 2D/3D point correspondence in view_n that is in
                 # the feature match between view and view_n
                 index = np.argwhere(np.isclose(view_n.world_points[:, :2], point))
-                #print(index)
+                # print(index)
                 if index.size != 0:
                     pts_found += 1
                     point_3d = view_n.world_points[index[0][0], 2:]
@@ -296,7 +297,7 @@ def compute_pose(view, completed_views, K, dist, img_matches):
 
     print(points_3d.shape, points_2d.shape)
 
-    reprojection_Error = 8.0
+    reprojection_Error = 5.0
     if len(points_3d) > 12:
         _, rotation, translation, _ = cv.solvePnPRansac(points_3d, points_2d, K, None, confidence=0.99,
                                                         reprojectionError=reprojection_Error, flags=cv.SOLVEPNP_EPNP)
@@ -312,6 +313,8 @@ def compute_pose(view, completed_views, K, dist, img_matches):
 
 
 def get_paths_from_txt(filename):
+    if not filename.endswith(".txt"):
+        raise TypeError("Invalid *.txt file path entered.")
     logging.info("Reading image paths text file...")
     with open(filename, 'r') as f:
         image_paths = f.readlines()
@@ -368,7 +371,7 @@ def remove_outliers(view1, view2):
     X1, X2 = view1.tracked_pts[view2.id]
     FM_METHOD = cv.FM_RANSAC
 
-    fundamental_mat, mask = cv.findFundamentalMat(X1, X2, method=FM_METHOD, confidence=0.999, ransacReprojThreshold=8)
+    fundamental_mat, mask = cv.findFundamentalMat(X1, X2, method=FM_METHOD, confidence=0.999, ransacReprojThreshold=5)
     if mask is not None:
         view1.tracked_pts[view2.id] = (X1[mask.ravel() == 1], X2[mask.ravel() == 1])
         view2.tracked_pts[view1.id] = (X2[mask.ravel() == 1], X1[mask.ravel() == 1])
@@ -407,3 +410,12 @@ def keypoints_to_dict(keypoints, filtered=True):
             val = [match[1], match[0]]
             img_matches[key] = val
     return img_matches
+
+
+def load_cal_mat(mat_path):
+    if mat_path.endswith('.npz'):
+        return np.load(mat_path)
+    elif mat_path.endswith('.txt'):
+        return np.loadtxt(mat_path)
+    else:
+        raise TypeError("Please enter a valid calibration matrix file type. *.npz and *.txt are accepted.")

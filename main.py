@@ -3,25 +3,36 @@ from baseline import Baseline
 from utils import *
 from view import ImageView
 from bundle_adjustment import BundleAdjustment
+from visualize import PointCloudVisualizer
 import numpy as np
 import os
 from datetime import datetime
+import argparse
+import sys
+
+BASE_PATH = os.path.join(os.getcwd(), "learned_correspondences")
+MODEL_PATH = os.path.join(BASE_PATH, "models")
+sys.path.append(BASE_PATH)
+sys.path.append(MODEL_PATH)
+from learned_correspondences import generate_matches
 
 
-def run():
-    image_paths = get_paths_from_txt("temple_ring_img_pths.txt")  # list of filenames for sfm.
+def run(args):
+    image_txt_path = args.image_text_path
+    image_paths = get_paths_from_txt(image_txt_path)  # list of filenames for sfm.
     # File names should be in 'image_001.jpg' format
     features_dir = os.path.join(os.getcwd(), "features/")
     # Obtain intrinsic matrix(K) and distortion coefficients for camera
     camera_data = np.load('calibration_data.npz')
-    # K, dist = camera_data['calibratoin_matrix'], camera_data['distortion_params']
-    # K = np.loadtxt('K.txt')
-    K = np.matrix('1520.40 0.00 302.32; 0.00 1525.90 246.87; 0.00 0.00 1.00')
+    K = load_cal_mat(args.K)
+    # K = np.matrix('1520.40 0.00 302.32; 0.00 1525.90 246.87; 0.00 0.00 1.00')
     dist = np.zeros((1, 5))
     # Load first two views. Note, ensure the two desired baseline images are at top of image paths text file.
     view1 = ImageView(image_paths[0], features_path=features_dir)
     view2 = ImageView(image_paths[1], features_path=features_dir)
     # Initialize baseline object with its point correspondences.
+    feature_match_gen = generate_matches.FeatureMatchGenerator(image_txt_path)
+    feature_match_gen.create_feature_matches()
     global img_matches
     keypoints = np.load('features\\feature_matches_filtered_tr2.npz', allow_pickle=True)['filtered_matches']
     img_matches = keypoints_to_dict(keypoints)
@@ -33,9 +44,10 @@ def run():
     # establish baseline -> get F matrix, E matrix, primary poses and 3D points from first two views
     wpSet = baseline()
     points_3d = sfm_loop(image_paths, features_dir, baseline, wpSet, K, dist)
-    print(points_3d.shape)
-    np.savez('C:\\Users\\Nisarg\\Desktop\\points_3d', point_cloud=points_3d)
+    np.savez(os.path.join(os.getcwd(), "\\points_3d"), point_cloud=points_3d)
     # Visualize point cloud
+    visualizer = PointCloudVisualizer(points_3d)
+    visualizer.visualize()
     # visualize_pt_cloud(world_coords)
 
 
@@ -81,9 +93,10 @@ def sfm_loop(sfm_images, features_dir, baseline, wpSet, K, dist):
                 # add correspondences to world coordinates
                 if X is not None:
                     X = store_3Dpoints_to_views(X, view_n, view, K, error_threshold=2.0)
-                    print("Points triangulated: ", X.shape[0])
+                    print(f"Found {len(X)} 3D points between image{view_n.name} and image{view.name}.")
+                    view.reproject_view(K, print_error=True)
                     wpSet.add_correspondences(X, view, view_n)  # change WorldPoints.py to skip existing 3D pts
-                    return True
+        print(f"Found {len(view.world_points)} 3D points for new image{view.name}.")
 
     for i, image in enumerate(sfm_images[2:]):
         # extract features of a view
@@ -95,6 +108,7 @@ def sfm_loop(sfm_images, features_dir, baseline, wpSet, K, dist):
             update_3d_points(view, completed_views, K, dist)
             completed_views.append(view)
         # Perform bundle adjustment on new view and existing views -> Update 3D points dictionary
+        wpSet.correspondences.to_csv(f'points\\point_correspondences_{i + 1}.csv')
         ba = BundleAdjustment(wpSet, K, dist, completed_views)
         poses, wpSet.world_points = ba.optimize()
         for j, view in enumerate(completed_views):
@@ -106,12 +120,24 @@ def sfm_loop(sfm_images, features_dir, baseline, wpSet, K, dist):
             view.reproject_view(K, print_error=True)
         np.savez(f'points\\points3d_{i}', point_cloud=wpSet.world_points)
 
-    wpSet.correspondences.to_csv('\point_correspondences.csv')
+    wpSet.correspondences.to_csv('\\point_correspondences.csv')
     np.savetxt("points_3d.csv", wpSet.world_points, delimiter=",")
     return wpSet.world_points
+
+
+def set_args(parser):
+    parser.add_argument('-i', '--image_paths', action='store', type=str, dest='image_text_path',
+                        help='File path to *.txt file containing all path of all image files to be reconstructed.')
+    parser.add_argument('-K', '--calibration_mat', action='store', type=str, dest='K',
+                        help='File path to *.npz or *.txt file containing camera intrinsic matrix.')
 
 
 if __name__ == "__main__":
     log_filename = "logs/" + datetime.now().strftime("%Y-%m-%dT%H_%M_%S") + '_sfm_runtime_log.log'
     logging.basicConfig(level=logging.INFO, filename=log_filename)
-    run()
+    desc = "This module performs Structure from Motion on a set of images. "
+    parser = argparse.ArgumentParser(description=desc)
+    set_args(parser)
+    args = parser.parse_args()
+
+    run(args)

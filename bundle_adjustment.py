@@ -77,7 +77,6 @@ class BundleAdjustment:
             params = np.concatenate((rot_vec, view.translation.reshape((1, 3))), axis=None).tolist()
             # print(view.name, params)
             self.camera_params.append(params)
-
         self.camera_params = np.array(self.camera_params)
         for i, row in self.correspondences.iterrows():
             self.points_2d.append(row['FeatureIndex'][0])
@@ -104,7 +103,7 @@ class BundleAdjustment:
         self.view2idx()
         x0 = np.hstack((self.camera_params.ravel(), self.points_3d.ravel()))
         print(len(self.camera_params.ravel()), len(self.points_3d.ravel()))
-        f0 = fun(x0, self.n_cameras, self.n_points, self.camera_indices, self.point_indices, self.points_2d, self.K)
+        fun(x0, self.n_cameras, self.n_points, self.camera_indices, self.point_indices, self.points_2d, self.K)
         A = bundle_adjustment_sparsity(self.n_cameras, self.n_points, self.camera_indices, self.point_indices)
         t0 = time.time()
         res = least_squares(fun, x0, jac_sparsity=A, verbose=2, x_scale='jac', ftol=1e-4, method='trf', xtol=1e-12,
