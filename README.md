@@ -31,7 +31,7 @@ Point cloud generation is performed by first creating a baseline of two images u
 
 Visualization of point cloud is performed using PyVista once all points are generated and bundle adjustment is complete.
 
-To read more about the theory and mathematics behind SFM, see my documentation [here]().
+*To learn more about the theory and mathematics behind SFM, **see my documentation [here](https://github.com/patel-nisarg/Structure_from_motion/blob/main/docs/Documentation.pdf).***
 
 [Back To The Top](#read-me-template)
 
