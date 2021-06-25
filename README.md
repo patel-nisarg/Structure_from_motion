@@ -58,6 +58,8 @@ The following command runs the entire process and produces a point cloud visuali
 
 [Back To The Top](#read-me-template)
 
+---
+
 ## Samples
 
 Images for a fountain are provided in the /images/datasets/fountain directory. These images produce the following point cloud.
