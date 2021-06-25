@@ -67,7 +67,7 @@ Images for a fountain are provided in the /images/datasets/fountain directory. T
 
 The [temple ring dataset](https://vision.middlebury.edu/mview/data/) can also be used and produces the following point cloud. 
 
-![ptcloud_tr](project-image-url)
+![ptcloud_tr](https://github.com/patel-nisarg/Structure_from_motion/blob/main/images/samples/temple_ring_pt_cloud.PNG)
 
 ---
 
