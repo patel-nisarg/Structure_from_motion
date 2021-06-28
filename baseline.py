@@ -7,7 +7,8 @@ from utils import *
 
 class Baseline:
     """
-    Creates the baseline from two views.
+    Baseline object from two initial views. Contains a fundamental matrix, essential matrix 
+    and initiliazes first two views.
     """
     def __init__(self, view1, view2, K, keypoints):
         """
@@ -22,41 +23,38 @@ class Baseline:
         self.view2 = view2
         self.fundamental_mat = np.zeros((3, 3))
         self.essential_mat = np.zeros((3, 3))
-        self.essential_mat2 = None
 
     def __call__(self, *args, **kwargs):
-        # Feature matching two views
-        self.feature_match_baseline()
+        """
+        Establish baseline with two views. Performs fundamental and essential matrix
+        calculations based on input keypoints for views.
+        """
         # Calculate fundamental matrix
         self.calc_fundamental_matrix()
         # Calculate essential matrix
         self.calc_essential_matrix()
         # Get four camera poses for view2
         self.view1.rotation = np.eye(3)
-        # C2, R2 = camera_pose_extraction(self.essential_mat2)
         # Disambiguate poses
-        # X_4 = []
         x1, x2 = self.view1.tracked_pts[self.view2.id]
         print(x1.shape, x2.shape)
-        # for i in range(len(R2)):
-        #     print(f"Pose {i + 1}")
-        #     X_n = triangulate_points(self.K, self.view1.translation, self.view1.rotation,
-        #                              C2[i], R2[i], x1, x2)
-        #     X_4.append(X_n)
-        #
-        # X, self.view2.rotation, self.view2.translation = pose_disambiguation(x2, self.K, C2, R2, X_4)
         X = triangulate_points(self.K, self.view1.translation, self.view1.rotation, self.view2.translation,
                                self.view2.rotation, x1, x2, print_error=True)
         wpSet = WorldPointSet(add_redundant_views=False)
         print(self.view1.tracked_pts[self.view2.id][0].shape)
         X = store_3Dpoints_to_views(X, self.view1, self.view2, self.K, error_threshold=1.0)
         wpSet.add_correspondences(X, self.view1, self.view2)
-        np.savez('points_3d_baseline', point_cloud=wpSet.world_points)
+        # uncomment to save baseline points
+        # np.savez('points_3d_baseline', point_cloud=wpSet.world_points)
         self.view1.reproject_view(self.K, print_error=True)
         self.view2.reproject_view(self.K, print_error=True)
         return wpSet
 
     def calc_fundamental_matrix(self, save=False):
+        """
+        Calculate Fundamental matrix between first two views.
+        :param save: Save fundamental matrix as binary file using Numpy.
+        """
         FM_METHOD = cv.FM_RANSAC
         self.fundamental_mat, mask = cv.findFundamentalMat(self.X1, self.X2, method=FM_METHOD)
         self.view1.tracked_pts[self.view2.id] = (self.X1[mask.ravel() == 1], self.X2[mask.ravel() == 1])
@@ -65,10 +63,10 @@ class Baseline:
             np.savez('fundamental_matrix', F=self.fundamental_mat)
 
     def calc_essential_matrix(self, save=False):
-        # self.essential_mat = self.K.T @ self.fundamental_mat @ self.K
-        # U, _, V = np.linalg.svd(self.essential_mat)
-        # self.essential_mat = U @ np.array([[1, 0, 0], [0, 1, 0], [0, 0, 0]]) @ V
-        # self.essential_mat = self.essential_mat / np.linalg.norm(self.essential_mat)
+        """
+        Calculate Essential matrix between first two views.
+        :param save: Save essential matrix as binary file using Numpy.
+        """
         self.essential_mat, _ = cv.findEssentialMat(self.X1, self.X2, self.K, cv.RANSAC, 0.999, 1.0)
         _, self.view2.rotation, self.view2.translation, _ = cv.recoverPose(self.essential_mat, self.X1, self.X2, self.K)
         if save:
@@ -76,7 +74,8 @@ class Baseline:
 
     def feature_match_baseline(self, matcher_type="bf", NUM_NEAREST_NEIGHBOURS=2):
         """
-        Performs feature matching of the two baseline views.
+        Performs feature matching of the two baseline views. This method is only needs to be run if the
+        two view keypoints have not already been calculated.
         :param view1:
         :param view2:
         :param matcher_type:
@@ -94,7 +93,6 @@ class Baseline:
             matcher = cv.BFMatcher()
         else:
             raise Exception("Please enter a valid matcher type! Either 'bf' or 'flann' are accepted.")
-
         # Read features from file. If features file does not exist, extract from images and save to file.
         for view in [self.view1, self.view2]:
             view.read_features()
@@ -120,6 +118,3 @@ class Baseline:
         self.X2 = np.array(X2, dtype=np.float64)
 
         return None
-
-    def recover_pose(self):
-        pass

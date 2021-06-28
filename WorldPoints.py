@@ -5,7 +5,7 @@ import logging
 
 class WorldPointSet:
     """
-    Set for storing and retrieving 3D points for SFM.
+    Dataset for storing and retrieving 3D points for SFM.
     world_points property contains the points that will be visualized.
     """
 
@@ -15,12 +15,22 @@ class WorldPointSet:
         self.add_redundant_views = add_redundant_views
 
     def add_world_points(self, points):
+        """
+        Add world points to self.world_points numpy array (N x 3).
+
+        :params points: (N x 3) 3D points to add to world_points
+        """
         self.world_points = np.append(self.world_points, points, axis=0)
 
-    def remove_world_points(self, point_indices):
-        pass
-
     def add_correspondences(self, world_coords, view1, view2):
+        """
+        Add view keypoints and 3D points (world coordinates) to world point dataset object.
+        Also checks if 3D points already exist in set and ignores those points.
+
+        :params world_coords: 3D points to add
+        :params view1: first view from which to add keypoints
+        :params view2: second view from which to add keypoints
+        """
         ViewIds = [view1.id, view2.id]
         feature_indices = view1.tracked_pts[view2.id]
 
@@ -57,16 +67,18 @@ class WorldPointSet:
 
             logging.info(f"Appended {len(world_coords)} 3D points to world coordinates set.")
 
-    def remove_correspondences(self, correspondences):
-        pass
-
     def save_to_file(self, filename):
         """
         Saves to file the world coordinates as an (N x 3) array.
         :param filename: Name of file to store world coordinates.
         :return: None
         """
-        pass
+        np.savez(filename, point_cloud=self.world_points)
 
     def load_from_file(self, filename):
-        pass
+        """
+        Loads world points (3D points) from file.
+
+        :params filename: Name of file to load world coordinates.
+        """
+        self.world_points = np.load(filename)

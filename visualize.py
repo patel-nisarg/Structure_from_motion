@@ -1,17 +1,18 @@
 import numpy as np
 import pyvista as pv
-from pyvista import examples
-
-# REQUIRES PYTHON 3.7
-# 'F:/Documents/SFM_Project/points_3d_baseline.npz'
-# points = np.load('points3d_8_2.npz')['point_cloud']
 
 
 class PointCloudVisualizer:
+    """
+    A visualizer object that contains 3D points to be visualized.
+    """
     def __init__(self, points):
         self.points = points
 
     def visualize(self):
+        """
+        Visualizes 3D points by generating a point cloud using pyvista.
+        """
         points1 = np.empty((0, 3))
         pt_bound = 5
 

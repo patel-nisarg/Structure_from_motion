@@ -11,8 +11,9 @@ def create_view_ID(img):
     """
     Generates 12-digit ID of image to make sure each image has a unique identifier. When saving and reading
     image features, two images with the same filename will have unique identifiers.
-    :param img: Image to create an ID for.
-    :return:
+    :param img: image to create an ID for.
+    :return viewID: a unique viewId based on image data. 
+    Note: this will return a different id for two different images of the same filename
     """
     img = cv.resize(img, dsize=(10, 10), interpolation=cv.INTER_NEAREST)  # rescale with nearest neighbour
     hash_object = hashlib.sha256(str(img).encode('utf-8'))
@@ -47,6 +48,8 @@ class ImageView:
     def extract_features(self, write_to_file=False):
         """
         Extracts features from View object. Optionally, saves features to file in .npz format.
+        
+        :params write_to_file: set to True if features should be written in binary format (.npz)
         """
         logging.info(f"Extracting features from {self.name}...")
         sift = cv.SIFT_create()
@@ -98,6 +101,14 @@ class ImageView:
         return self.world_points.items()
 
     def reproject_view(self, K, print_error=False):
+        """
+        Reprojects view and calculates total reprojection error for view. Uses the
+        view's world points dictionary for calculations.
+
+        :params K: camera intrinsic matrix
+        :params print_error: Set to true if reprojection error should be printed
+        
+        """
         tot_error = []
         for point in self.world_points:
             point_2d = point[:2]
@@ -110,9 +121,7 @@ class ImageView:
     def update_world_points(self, wpSet):
         """
         Updates View with 3D points from world points set. Performed after bundle adjustment returns 3D points and poses
-        :param view:
         :param wpSet:
-        :return:
         """
         self.world_points = np.empty((0, 5))
         for i, row in wpSet.correspondences.iterrows():

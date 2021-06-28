@@ -7,9 +7,17 @@ from scipy.sparse import lil_matrix
 from scipy.optimize import least_squares
 
 
-# Reference: https://scipy-cookbook.readthedocs.io/items/bundle_adjustment.html
-
 def project(points, camera_params, K, dist=np.array([])):
+    """
+    Project 2D points using given camera parameters (R matrix and t vector), intrinsic matrix,
+    and distortion parameters.
+    :params points: 3D points to reproject
+    :params camera_params: camera parameters (N x 12) with [:9] containing rotation matrix params
+    and [9:12] containing translation vector parameters
+    :params K: camera intrinsic matrix
+    :params dist: distortion parameters (N x 5)
+    :return points_proj: Numpy array of reprojected points
+    """
     points_proj = []
     for idx in range(len(camera_params)):  # idx applies to both points and cam_params, they are = length vectors
         R = camera_params[idx][:9].reshape(3, 3)
@@ -24,8 +32,18 @@ def project(points, camera_params, K, dist=np.array([])):
 
 
 def fun(params, n_cameras, n_points, camera_indices, point_indices, points_2d, K):
-    # returns difference between projected 2D points and actual 2D points
-    # different procedure here for baseline views
+    """
+    Main optimization function to minimize. Takes the difference between reprojected points
+    and 2D points from views. 
+
+    :params params: numpy array of [camera parameters; 3D points]
+    :params n_cameras: total number of cameras/views
+    :params n_points: total number of 3D points
+    :params camera_indices: numpy array of camera/view indicies corresponding with each 3D point
+    :params point_indices: numpy array of indicies for 3D points corresponidng to each observation
+    :params points_2d: 2D points corresponding to observations
+    :params K: camera intrinsics matrix
+    """
     camera_params = params[:n_cameras * 12].reshape((n_cameras, 12))
     points_3d = params[n_cameras * 12:].reshape((n_points, 3))
     points_proj = project(points_3d[point_indices], camera_params[camera_indices], K)
@@ -33,6 +51,14 @@ def fun(params, n_cameras, n_points, camera_indices, point_indices, points_2d, K
 
 
 def bundle_adjustment_sparsity(n_cameras, n_points, camera_indices, point_indices):
+    """
+    Handles the sparsity for Jacobian.
+
+    :params n_cameras: total number of cameras/views
+    :params n_points: total number of 3D points
+    :params camera_indices: numpy array of camera/view indicies corresponding with each 3D point
+    :params point_indices: numpy array of indicies for 3D points corresponidng to each observation   
+    """
     m = camera_indices.size * 2
     n = n_cameras * 12 + n_points * 3
     A = lil_matrix((m, n), dtype=int)
@@ -100,6 +126,12 @@ class BundleAdjustment:
                  camera_indices=self.camera_indices, point_indices=self.point_indices, points_2d=self.points_2d)
 
     def optimize(self):
+        """
+        Performs optimization on reprojection error function by updating poses and 3D points.
+        :return poses: (N x 12) numpy array containing optimized pose information with [:9] containing rotation matrix params
+        and [9:12] containing translation vector parameters
+        :return points_3d: optimized 3D points
+        """
         self.view2idx()
         x0 = np.hstack((self.camera_params.ravel(), self.points_3d.ravel()))
         print(len(self.camera_params.ravel()), len(self.points_3d.ravel()))
